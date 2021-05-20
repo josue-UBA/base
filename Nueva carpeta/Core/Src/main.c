@@ -37,21 +37,14 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define GPIO1 GPIO_PIN_7
-#define GPIO5 GPIO_PIN_5
-#define GPIO7 GPIO_PIN_6
-#define GPIO3 GPIO_PIN_6
-#define LEDB GPIO_PIN_1
-#define LED_USED GPIO_PIN_0
-#define GPIO_DEBUG GPIO_PIN_4
+#define LEDB GPIO_PIN_0
+#define GPIO0 GPIO_PIN_4
 
-#define LED_RATE_MS 500 / portTICK_RATE_MS
-#define LOADING_RATE_MS 250
+#define RATE 1000
+#define LED_RATE pdMS_TO_TICKS(RATE)
+#define STEP 100
+#define MAX_T  (RATE - STEP)
 
-#define LED_RATE pdMS_TO_TICKS(LED_RATE_MS)
-#define LOADING_RATE pdMS_TO_TICKS(LOADING_RATE_MS)
-
-#define MODE 1
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -141,15 +134,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  #if MODE == 1
   BaseType_t res = xTaskCreate(heart_beat, ( const char * )"heart_beat", configMINIMAL_STACK_SIZE*2, 0, tskIDLE_PRIORITY+1, 0);
-  #endif
-  #if MODE == 2
-  BaseType_t res = xTaskCreate(loading_1, ( const char * )"loading_1", configMINIMAL_STACK_SIZE*2, 0, tskIDLE_PRIORITY+1, 0);
-  #endif
-  #if MODE == 3
-  BaseType_t res = xTaskCreate(loading_2, ( const char * )"loading_2", configMINIMAL_STACK_SIZE*2, 0, tskIDLE_PRIORITY+1, 0);
-  #endif
   if(res == pdFAIL)
   {
     while(pdTRUE)
@@ -313,85 +298,25 @@ void mi_funcion(uint16_t a, int b)
 void heart_beat( void* taskParmPtr )
 {
   // ---------- CONFIGURACIONES ------------------------------
-  HAL_GPIO_WritePin( GPIOA, GPIO_DEBUG, GPIO_PIN_SET );
+  TickType_t xPeriodicity =  LED_RATE;		// Tarea periodica cada 1000 ms
+  TickType_t xLastWakeTime = xTaskGetTickCount();
+  uint16_t duty = 0;
   // ---------- REPETIR POR SIEMPRE --------------------------
   while( pdTRUE )
   {
-    HAL_GPIO_WritePin(GPIOA, LED_USED, GPIO_PIN_SET );
-    HAL_GPIO_WritePin(GPIOA, GPIO_DEBUG, GPIO_PIN_SET );
-    vTaskDelay( LED_RATE_MS );
-
-    HAL_GPIO_WritePin(GPIOA, LED_USED, GPIO_PIN_RESET );
-    HAL_GPIO_WritePin(GPIOA, GPIO_DEBUG, GPIO_PIN_RESET );
-    vTaskDelay( LED_RATE_MS ); //NO USAR!!
-  }
-}
-
-// Implementacion de funcion de la tarea
-void loading_1( void* taskParmPtr )
-{
-  // ---------- CONFIGURACIONES ------------------------------
-  uint16_t led = LEDB;
-  uint16_t gpio = GPIO7;
-
-  HAL_GPIO_WritePin(GPIOA, GPIO7, GPIO_PIN_SET );
-  HAL_GPIO_WritePin(GPIOA, GPIO5, GPIO_PIN_SET );
-  HAL_GPIO_WritePin(GPIOA, GPIO3, GPIO_PIN_SET );
-  HAL_GPIO_WritePin(GPIOA, GPIO1, GPIO_PIN_SET );
-  // ---------- REPETIR POR SIEMPRE --------------------------
-  while( pdTRUE )
-  {
-	HAL_GPIO_WritePin(GPIOA, led, GPIO_PIN_SET );
-	HAL_GPIO_WritePin(GPIOA, gpio, GPIO_PIN_SET );
-    vTaskDelay( LOADING_RATE );
-
-	HAL_GPIO_WritePin(GPIOA, led, GPIO_PIN_RESET );
-	HAL_GPIO_WritePin(GPIOA, gpio, GPIO_PIN_RESET );
-    /*
-    if ( led == LED3 )
+    duty += STEP;
+    HAL_GPIO_WritePin(GPIOA, LEDB, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOA, GPIO0, GPIO_PIN_SET);
+    vTaskDelay( duty / portTICK_RATE_MS );
+    //vTaskDelay ( pdMS_TO_TICKS(duty) );
+    HAL_GPIO_WritePin(GPIOA, LEDB, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOA, GPIO0, GPIO_PIN_RESET);
+    if ( duty == MAX_T )
     {
-      led = LEDB;
-      gpio = GPIO7;
+      duty = 0;
     }
-    else
-    {
-      led = led + 1;
-      gpio ++;
-    }
-    */
-    vTaskDelay( LOADING_RATE ); //NO USAR!!
-  }
-}
-
-// Implementacion de funcion de la tarea
-void loading_2( void* taskParmPtr )
-{
-  // ---------- CONFIGURACIONES ------------------------------
-  uint16_t led = LEDB;
-  uint16_t gpio = GPIO7;
-
-  HAL_GPIO_WritePin(GPIOA, GPIO7, GPIO_PIN_SET );
-  HAL_GPIO_WritePin(GPIOA, GPIO5, GPIO_PIN_SET );
-  HAL_GPIO_WritePin(GPIOA, GPIO3, GPIO_PIN_SET );
-  HAL_GPIO_WritePin(GPIOA, GPIO1, GPIO_PIN_SET );
-  // ---------- REPETIR POR SIEMPRE --------------------------
-  while( pdTRUE )
-  {
-	HAL_GPIO_TogglePin(GPIOA, led );
-    HAL_GPIO_TogglePin(GPIOA, gpio );
-    /*
-    if ( led == LED3 )
-    {
-      led = LEDB;
-      gpio = GPIO7;
-    }
-    else
-    {
-      led = led + 1;
-      gpio ++;
-    }
-    */
-    vTaskDelay( LOADING_RATE );
+    // Envia la tarea al estado bloqueado durante xPeriodicity (delay periodico)
+    vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
   }
 }
 /* USER CODE END 4 */
