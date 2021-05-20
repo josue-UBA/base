@@ -37,7 +37,10 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define LED_B GPIO_PIN_0
+#define LED_1 GPIO_PIN_4
+#define LED_2 GPIO_PIN_6
+#define LED_3 GPIO_PIN_5
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
