@@ -44,7 +44,6 @@
 UART_HandleTypeDef huart2;
 
 /* Definitions for defaultTask */
-
 /* USER CODE BEGIN PV */
 TaskHandle_t defaultTaskHandle;
 /* USER CODE END PV */
