@@ -56,6 +56,8 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
+void delay_con_while(uint32_t);
+void mi_funcion(uint16_t, int);
 void StartTask1(void *argument);
 void StartTask2(void *argument);
 void StartTask3(void *argument);
@@ -263,6 +265,27 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void delay_con_while(uint32_t ms)
+{
+  volatile uint32_t dummy;
+  /* obtengo el tick absoluto */
+  TickType_t base = xTaskGetTickCount();
+  /* calculo el tick absoluto para destrabar el while */
+  TickType_t target = base + ms; /* no esta contemplado el wrap arraond */
+  while (xTaskGetTickCount() < target)
+  {
+  	dummy++;
+  }
+}
+
+void mi_funcion(uint16_t a, int b)
+{
+  for(int i=0; i < b*2; i++)
+  {
+  	HAL_GPIO_TogglePin(GPIOA, a);
+  	delay_con_while(500);
+  }
+}
 void StartTask1(void *argument)
 {
   /* USER CODE BEGIN 5 */
@@ -273,7 +296,7 @@ void StartTask1(void *argument)
     (const char*) "task2",
     128 * 4,
     NULL,
-	prioridadTarea1,
+	prioridadTarea1 - 1,
     taskHandle2
   );
   xTaskCreate(
@@ -281,16 +304,16 @@ void StartTask1(void *argument)
     (const char*) "task3",
     128 * 4,
     NULL,
-	prioridadTarea1,
+	prioridadTarea1 - 2,
 	taskHandle3
   );
   /* Infinite loop */
   for(;;)
   {
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
-    vTaskDelay(250);
+    delay_con_while(250);
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
-    vTaskDelay(250);
+    delay_con_while(250);
   }
   /* USER CODE END 5 */
 }
@@ -301,9 +324,9 @@ void StartTask3(void *argument)
   for(;;)
   {
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-    vTaskDelay(1000);
+    delay_con_while(1000);
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-    vTaskDelay(1000);
+    delay_con_while(1000);
   }
   /* USER CODE END 5 */
 }
@@ -314,9 +337,9 @@ void StartTask2(void *argument)
   for(;;)
   {
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-    vTaskDelay(500);
+    delay_con_while(500);
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
-    vTaskDelay(500);
+    delay_con_while(500);
   }
   /* USER CODE END 5 */
 }
