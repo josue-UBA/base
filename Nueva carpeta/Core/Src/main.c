@@ -135,8 +135,8 @@ int main(void)
 	(const char*) "task1",
 	128 * 4,
 	NULL,
-	tskIDLE_PRIORITY+1,
-	taskHandle1
+	configMAX_PRIORITIES - 1,
+	&taskHandle1
   );
   /* USER CODE END RTOS_THREADS */
 
@@ -301,24 +301,24 @@ void StartTask1(void *argument)
     (const char*) "task2",
     128 * 4,
     NULL,
-	prioridadTarea1 - 1,
-    taskHandle2
+	configMAX_PRIORITIES - 2,
+    &taskHandle2
   );
   xTaskCreate(
     StartTask3,
     (const char*) "task3",
     128 * 4,
     NULL,
-	prioridadTarea1 - 2,
-	taskHandle3
+	configMAX_PRIORITIES - 3,
+	&taskHandle3
   );
   xTaskCreate(
     StartTask4,
     (const char*) "task4",
     128 * 4,
     NULL,
-	prioridadTarea1 - 3,
-	taskHandle4
+	configMAX_PRIORITIES - 4,
+	&taskHandle4
   );
   vTaskSuspend(taskHandle1);
   mi_funcion(LED_B, 2);
@@ -338,9 +338,14 @@ void StartTask2(void *argument)
 void StartTask3(void *argument)
 {
   /* USER CODE BEGIN 5 */
-  mi_funcion(LED_2, 3);
+  mi_funcion(LED_2, 6);
   vTaskSuspend(taskHandle3);
   /* Infinite loop */
+  for(;;)
+  {
+    HAL_GPIO_TogglePin(GPIOA, LED_3);
+    delay_con_while(500);
+  }
   /* USER CODE END 5 */
 }
 void StartTask4(void *argument)
