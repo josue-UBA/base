@@ -131,22 +131,6 @@ int main(void)
 	tskIDLE_PRIORITY+1,
 	taskHandle1
   );
-  xTaskCreate(
-    StartTask2,
-	(const char*) "task2",
-	128 * 4,
-	NULL,
-	tskIDLE_PRIORITY+1,
-	taskHandle2
-  );
-  xTaskCreate(
-    StartTask3,
-	(const char*) "task3",
-	128 * 4,
-	NULL,
-	tskIDLE_PRIORITY+1,
-	taskHandle3
-  );
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -282,6 +266,24 @@ static void MX_GPIO_Init(void)
 void StartTask1(void *argument)
 {
   /* USER CODE BEGIN 5 */
+
+  TaskHandle_t prioridadTarea1 = uxTaskPriorityGet(taskHandle1);
+  xTaskCreate(
+    StartTask2,
+    (const char*) "task2",
+    128 * 4,
+    NULL,
+	prioridadTarea1,
+    taskHandle2
+  );
+  xTaskCreate(
+    StartTask3,
+    (const char*) "task3",
+    128 * 4,
+    NULL,
+	prioridadTarea1,
+	taskHandle3
+  );
   /* Infinite loop */
   for(;;)
   {
