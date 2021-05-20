@@ -37,10 +37,20 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define LED_B GPIO_PIN_0
-#define LED_1 GPIO_PIN_4
-#define LED_2 GPIO_PIN_5
-#define LED_3 GPIO_PIN_6
+#define GPIO0 GPIO_PIN_0
+#define GPIO1 GPIO_PIN_1
+#define GPIO3 GPIO_PIN_4
+#define GPIO5 GPIO_PIN_5
+#define GPIO7 GPIO_PIN_6
+#define LEDB GPIO_PIN_7
+
+#define LED_RATE_MS 500
+#define LOADING_RATE_MS 250
+
+#define LED_RATE pdMS_TO_TICKS(LED_RATE_MS)
+#define LOADING_RATE pdMS_TO_TICKS(LOADING_RATE_MS)
+
+#define MODE 3
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -63,10 +73,9 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void delay_con_while(uint32_t);
 void mi_funcion(uint16_t, int);
-void StartTask1(void *argument);
-void StartTask2(void *argument);
-void StartTask3(void *argument);
-void StartTask4(void *argument);
+void heart_beat( void* taskParmPtr ); // Prendo A - Apago A
+void loading_1( void* taskParmPtr );  // Prendo A - Apago A - Prendo B - Apago B .... hasta D
+void loading_2( void* taskParmPtr ); // Prendo A - Prendo B - ... - Apago A - Apago B - ...
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -131,14 +140,15 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  xTaskCreate(
-    StartTask1,
-	(const char*) "task1",
-	128 * 4,
-	NULL,
-	configMAX_PRIORITIES - 1,
-	&taskHandle1
-  );
+  #if MODE == 1
+  BaseType_t res = xTaskCreate(heart_beat, ( const char * )"heart_beat", configMINIMAL_STACK_SIZE*2, 0, tskIDLE_PRIORITY+1, 0);
+  #endif
+  #if MODE == 2
+  BaseType_t res = xTaskCreate(loading_1, ( const char * )"loading_1", configMINIMAL_STACK_SIZE*2, 0, tskIDLE_PRIORITY+1, 0);
+  #endif
+  #if MODE == 3
+  BaseType_t res = xTaskCreate(loading_2, ( const char * )"loading_2", configMINIMAL_STACK_SIZE*2, 0, tskIDLE_PRIORITY+1, 0);
+  #endif
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -292,77 +302,92 @@ void mi_funcion(uint16_t a, int b)
   	delay_con_while(500);
   }
 }
-void StartTask1(void *argument)
+// Implementacion de funcion de la tarea
+void heart_beat( void* taskParmPtr )
 {
-  /* USER CODE BEGIN 5 */
+  // ---------- CONFIGURACIONES ------------------------------
+  HAL_GPIO_WritePin( GPIOA, GPIO0, GPIO_PIN_SET );
+  // ---------- REPETIR POR SIEMPRE --------------------------
+  while( pdTRUE )
+  {
+    HAL_GPIO_WritePin(GPIOA, LEDB, GPIO_PIN_SET );
+    vTaskDelay( LED_RATE_MS / portTICK_RATE_MS );
+    HAL_GPIO_WritePin(GPIOA, LEDB, GPIO_PIN_RESET );
+    HAL_GPIO_TogglePin(GPIOA, GPIO0);
 
-  UBaseType_t prioridadTarea1 = uxTaskPriorityGet(taskHandle1);
-  xTaskCreate(
-    StartTask2,
-    (const char*) "task2",
-    128 * 4,
-    NULL,
-	configMAX_PRIORITIES - 2,
-    &taskHandle2
-  );
-  xTaskCreate(
-    StartTask3,
-    (const char*) "task3",
-    128 * 4,
-    NULL,
-	configMAX_PRIORITIES - 2,
-	&taskHandle3
-  );
-  xTaskCreate(
-    StartTask4,
-    (const char*) "task4",
-    128 * 4,
-    NULL,
-	configMAX_PRIORITIES - 4,
-	&taskHandle4
-  );
-  vTaskSuspend(taskHandle1);
-  mi_funcion(LED_B, 2);
-  vTaskSuspend(taskHandle1);
-  /* Infinite loop */
-  /* USER CODE END 5 */
-}
-void StartTask2(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-  mi_funcion(LED_1, 3);
-  bandera = 1;
-  vTaskResume(taskHandle1);
-  vTaskSuspend(taskHandle2);
-  /* Infinite loop */
-  /* USER CODE END 5 */
-}
-void StartTask3(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-  while(bandera == 0)
-  {
+    vTaskDelay( LED_RATE ); //NO USAR!!
   }
-  mi_funcion(LED_2, 6);
-  vTaskSuspend(taskHandle3);
-  /* Infinite loop */
-  /* USER CODE END 5 */
-}
-void StartTask4(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-  vTaskDelete(taskHandle1);
-  vTaskDelete(taskHandle2);
-  vTaskDelete(taskHandle3);
-  /* Infinite loop */
-  for(;;)
-  {
-    HAL_GPIO_TogglePin(GPIOA, LED_3);
-    delay_con_while(500);
-  }
-  /* USER CODE END 5 */
 }
 
+// Implementacion de funcion de la tarea
+void loading_1( void* taskParmPtr )
+{
+  // ---------- CONFIGURACIONES ------------------------------
+  gpioMap_t led = LEDB;
+  gpioMap_t gpio = GPIO7;
+
+  HAL_GPIO_WritePin(GPIOA, GPIO7, GPIO_PIN_SET );
+  HAL_GPIO_WritePin(GPIOA, GPIO5, GPIO_PIN_SET );
+  HAL_GPIO_WritePin(GPIOA, GPIO3, GPIO_PIN_SET );
+  HAL_GPIO_WritePin(GPIOA, GPIO1, GPIO_PIN_SET );
+  // ---------- REPETIR POR SIEMPRE --------------------------
+  while( pdTRUE )
+  {
+	HAL_GPIO_WritePin(GPIOA, led, GPIO_PIN_SET );
+	HAL_GPIO_WritePin(GPIOA, gpio, GPIO_PIN_SET );
+    vTaskDelay( LOADING_RATE );
+
+	HAL_GPIO_WritePin(GPIOA, led, GPIO_PIN_RESET );
+	HAL_GPIO_WritePin(GPIOA, gpio, GPIO_PIN_RESET );
+
+    if ( led == LED3 )
+    {
+      led = LEDB;
+      gpio = GPIO7;
+    }
+    else
+    {
+      led = led + 1;
+      gpio ++;
+    }
+
+    vTaskDelay( LOADING_RATE ); //NO USAR!!
+  }
+}
+
+// Implementacion de funcion de la tarea
+void loading_2( void* taskParmPtr )
+{
+  // ---------- CONFIGURACIONES ------------------------------
+  gpioMap_t led = LEDB;
+  gpioMap_t gpio = GPIO7;
+
+  HAL_GPIO_WritePin(GPIOA, GPIO7, GPIO_PIN_SET );
+  HAL_GPIO_WritePin(GPIOA, GPIO5, GPIO_PIN_SET );
+  HAL_GPIO_WritePin(GPIOA, GPIO3, GPIO_PIN_SET );
+  HAL_GPIO_WritePin(GPIOA, GPIO1, GPIO_PIN_SET );
+  // ---------- REPETIR POR SIEMPRE --------------------------
+  while( TRUE )
+  {
+	HAL_GPIO_TogglePin(GPIOA, led, GPIO_PIN_SET );
+    HAL_GPIO_TogglePin(GPIOA, gpio, GPIO_PIN_SET );
+    gpioToggle( led );
+    gpioToggle( gpio );
+
+    if ( led == LED3 )
+    {
+      led = LEDB;
+      gpio = GPIO7;
+    }
+    else
+    {
+      led = led + 1;
+      gpio ++;
+    }
+
+    vTaskDelay( LOADING_RATE );
+  }
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
