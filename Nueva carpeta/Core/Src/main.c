@@ -44,19 +44,21 @@
 UART_HandleTypeDef huart2;
 
 /* Definitions for defaultTask */
-
 /* USER CODE BEGIN PV */
-TaskHandle_t defaultTaskHandle;
+TaskHandle_t taskHandle1;
+TaskHandle_t taskHandle2;
+TaskHandle_t taskHandle3;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
-
+void StartTask1(void *argument);
+void StartTask2(void *argument);
+void StartTask3(void *argument);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -68,7 +70,6 @@ void StartDefaultTask(void *argument);
   * @brief  The application entry point.
   * @retval int
   */
-
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -123,12 +124,28 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   xTaskCreate(
-    StartDefaultTask,
-	(const char*) "defaultTask",
+    StartTask1,
+	(const char*) "task1",
 	128 * 4,
 	NULL,
 	tskIDLE_PRIORITY+1,
-	defaultTaskHandle
+	taskHandle1
+  );
+  xTaskCreate(
+    StartTask2,
+	(const char*) "task2",
+	128 * 4,
+	NULL,
+	tskIDLE_PRIORITY+1,
+	taskHandle2
+  );
+  xTaskCreate(
+    StartTask3,
+	(const char*) "task3",
+	128 * 4,
+	NULL,
+	tskIDLE_PRIORITY+1,
+	taskHandle3
   );
   /* USER CODE END RTOS_THREADS */
 
@@ -137,7 +154,7 @@ int main(void)
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
-  vTaskStartScheduler();
+  osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
@@ -244,7 +261,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -252,16 +269,42 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
+  /*Configure GPIO pins : PA5 PA6 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
 
 /* USER CODE BEGIN 4 */
+void StartTask3(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+    vTaskDelay(1000);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+    vTaskDelay(1000);
+  }
+  /* USER CODE END 5 */
+}
+void StartTask2(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+    vTaskDelay(500);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+    vTaskDelay(500);
+  }
+  /* USER CODE END 5 */
+}
 
 /* USER CODE END 4 */
 
@@ -272,16 +315,16 @@ static void MX_GPIO_Init(void)
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
+void StartTask1(void *argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
   {
-    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-    vTaskDelay(500);
-    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-    vTaskDelay(2000);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
+    vTaskDelay(250);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
+    vTaskDelay(250);
   }
   /* USER CODE END 5 */
 }
