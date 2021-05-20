@@ -37,20 +37,21 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define GPIO0 GPIO_PIN_0
-#define GPIO1 GPIO_PIN_1
-#define GPIO3 GPIO_PIN_4
+#define GPIO1 GPIO_PIN_7
 #define GPIO5 GPIO_PIN_5
 #define GPIO7 GPIO_PIN_6
-#define LEDB GPIO_PIN_7
+#define GPIO3 GPIO_PIN_6
+#define LEDB GPIO_PIN_1
+#define LED_USED GPIO_PIN_0
+#define GPIO_DEBUG GPIO_PIN_4
 
-#define LED_RATE_MS 500
+#define LED_RATE_MS 500 / portTICK_RATE_MS
 #define LOADING_RATE_MS 250
 
 #define LED_RATE pdMS_TO_TICKS(LED_RATE_MS)
 #define LOADING_RATE pdMS_TO_TICKS(LOADING_RATE_MS)
 
-#define MODE 3
+#define MODE 1
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -149,6 +150,12 @@ int main(void)
   #if MODE == 3
   BaseType_t res = xTaskCreate(loading_2, ( const char * )"loading_2", configMINIMAL_STACK_SIZE*2, 0, tskIDLE_PRIORITY+1, 0);
   #endif
+  if(res == pdFAIL)
+  {
+    while(pdTRUE)
+    {
+    }
+  }
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -306,16 +313,17 @@ void mi_funcion(uint16_t a, int b)
 void heart_beat( void* taskParmPtr )
 {
   // ---------- CONFIGURACIONES ------------------------------
-  HAL_GPIO_WritePin( GPIOA, GPIO0, GPIO_PIN_SET );
+  HAL_GPIO_WritePin( GPIOA, GPIO_DEBUG, GPIO_PIN_SET );
   // ---------- REPETIR POR SIEMPRE --------------------------
   while( pdTRUE )
   {
-    HAL_GPIO_WritePin(GPIOA, LEDB, GPIO_PIN_SET );
-    vTaskDelay( LED_RATE_MS / portTICK_RATE_MS );
-    HAL_GPIO_WritePin(GPIOA, LEDB, GPIO_PIN_RESET );
-    HAL_GPIO_TogglePin(GPIOA, GPIO0);
+    HAL_GPIO_WritePin(GPIOA, LED_USED, GPIO_PIN_SET );
+    HAL_GPIO_WritePin(GPIOA, GPIO_DEBUG, GPIO_PIN_SET );
+    vTaskDelay( LED_RATE_MS );
 
-    vTaskDelay( LED_RATE ); //NO USAR!!
+    HAL_GPIO_WritePin(GPIOA, LED_USED, GPIO_PIN_RESET );
+    HAL_GPIO_WritePin(GPIOA, GPIO_DEBUG, GPIO_PIN_RESET );
+    vTaskDelay( LED_RATE_MS ); //NO USAR!!
   }
 }
 
@@ -323,8 +331,8 @@ void heart_beat( void* taskParmPtr )
 void loading_1( void* taskParmPtr )
 {
   // ---------- CONFIGURACIONES ------------------------------
-  gpioMap_t led = LEDB;
-  gpioMap_t gpio = GPIO7;
+  uint16_t led = LEDB;
+  uint16_t gpio = GPIO7;
 
   HAL_GPIO_WritePin(GPIOA, GPIO7, GPIO_PIN_SET );
   HAL_GPIO_WritePin(GPIOA, GPIO5, GPIO_PIN_SET );
@@ -339,7 +347,7 @@ void loading_1( void* taskParmPtr )
 
 	HAL_GPIO_WritePin(GPIOA, led, GPIO_PIN_RESET );
 	HAL_GPIO_WritePin(GPIOA, gpio, GPIO_PIN_RESET );
-
+    /*
     if ( led == LED3 )
     {
       led = LEDB;
@@ -350,7 +358,7 @@ void loading_1( void* taskParmPtr )
       led = led + 1;
       gpio ++;
     }
-
+    */
     vTaskDelay( LOADING_RATE ); //NO USAR!!
   }
 }
@@ -359,21 +367,19 @@ void loading_1( void* taskParmPtr )
 void loading_2( void* taskParmPtr )
 {
   // ---------- CONFIGURACIONES ------------------------------
-  gpioMap_t led = LEDB;
-  gpioMap_t gpio = GPIO7;
+  uint16_t led = LEDB;
+  uint16_t gpio = GPIO7;
 
   HAL_GPIO_WritePin(GPIOA, GPIO7, GPIO_PIN_SET );
   HAL_GPIO_WritePin(GPIOA, GPIO5, GPIO_PIN_SET );
   HAL_GPIO_WritePin(GPIOA, GPIO3, GPIO_PIN_SET );
   HAL_GPIO_WritePin(GPIOA, GPIO1, GPIO_PIN_SET );
   // ---------- REPETIR POR SIEMPRE --------------------------
-  while( TRUE )
+  while( pdTRUE )
   {
-	HAL_GPIO_TogglePin(GPIOA, led, GPIO_PIN_SET );
-    HAL_GPIO_TogglePin(GPIOA, gpio, GPIO_PIN_SET );
-    gpioToggle( led );
-    gpioToggle( gpio );
-
+	HAL_GPIO_TogglePin(GPIOA, led );
+    HAL_GPIO_TogglePin(GPIOA, gpio );
+    /*
     if ( led == LED3 )
     {
       led = LEDB;
@@ -384,7 +390,7 @@ void loading_2( void* taskParmPtr )
       led = led + 1;
       gpio ++;
     }
-
+    */
     vTaskDelay( LOADING_RATE );
   }
 }
