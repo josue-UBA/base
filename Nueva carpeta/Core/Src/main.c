@@ -52,6 +52,7 @@ TaskHandle_t taskHandle1;
 TaskHandle_t taskHandle2;
 TaskHandle_t taskHandle3;
 TaskHandle_t taskHandle4;
+int bandera = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -309,7 +310,7 @@ void StartTask1(void *argument)
     (const char*) "task3",
     128 * 4,
     NULL,
-	configMAX_PRIORITIES - 3,
+	configMAX_PRIORITIES - 2,
 	&taskHandle3
   );
   xTaskCreate(
@@ -330,6 +331,7 @@ void StartTask2(void *argument)
 {
   /* USER CODE BEGIN 5 */
   mi_funcion(LED_1, 3);
+  bandera = 1;
   vTaskResume(taskHandle1);
   vTaskSuspend(taskHandle2);
   /* Infinite loop */
@@ -338,14 +340,12 @@ void StartTask2(void *argument)
 void StartTask3(void *argument)
 {
   /* USER CODE BEGIN 5 */
+  while(bandera == 0)
+  {
+  }
   mi_funcion(LED_2, 6);
   vTaskSuspend(taskHandle3);
   /* Infinite loop */
-  for(;;)
-  {
-    HAL_GPIO_TogglePin(GPIOA, LED_3);
-    delay_con_while(500);
-  }
   /* USER CODE END 5 */
 }
 void StartTask4(void *argument)
