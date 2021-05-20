@@ -48,6 +48,7 @@ UART_HandleTypeDef huart2;
 TaskHandle_t taskHandle1;
 TaskHandle_t taskHandle2;
 TaskHandle_t taskHandle3;
+TaskHandle_t taskHandle4;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -307,38 +308,47 @@ void StartTask1(void *argument)
 	prioridadTarea1 - 2,
 	taskHandle3
   );
+  xTaskCreate(
+    StartTask4,
+    (const char*) "task4",
+    128 * 4,
+    NULL,
+	prioridadTarea1 - 3,
+	taskHandle4
+  );
+  vTaskSuspend(taskHandle1);
+  mi_funcion(LED_B, 2);
+  vTaskSuspend(taskHandle1);
   /* Infinite loop */
-  for(;;)
-  {
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
-    delay_con_while(250);
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
-    delay_con_while(250);
-  }
-  /* USER CODE END 5 */
-}
-void StartTask3(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-    delay_con_while(1000);
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-    delay_con_while(1000);
-  }
   /* USER CODE END 5 */
 }
 void StartTask2(void *argument)
 {
   /* USER CODE BEGIN 5 */
+  mi_funcion(LED_1, 3);
+  vTaskResume(taskHandle1);
+  vTaskSuspend(taskHandle2);
+  /* Infinite loop */
+  /* USER CODE END 5 */
+}
+void StartTask3(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  mi_funcion(LED_2, 3);
+  vTaskSuspend(taskHandle3);
+  /* Infinite loop */
+  /* USER CODE END 5 */
+}
+void StartTask4(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  vTaskDelete(taskHandle1);
+  vTaskDelete(taskHandle2);
+  vTaskDelete(taskHandle3);
   /* Infinite loop */
   for(;;)
   {
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-    delay_con_while(500);
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+    HAL_GPIO_TogglePin(GPIOA, LED_3);
     delay_con_while(500);
   }
   /* USER CODE END 5 */
