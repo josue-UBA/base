@@ -55,7 +55,7 @@ void keys_Init( void )
 
     for ( i = 0 ; i < KEY_COUNT ; i++ )
     {
-        keys_data[i].state          = STATE_BUTTON_UP;  // Set initial state
+        keys_data[i].state          = BUTTON_UP;  // Set initial state
         keys_data[i].time_down      = KEYS_INVALID_TIME;
         keys_data[i].time_up        = KEYS_INVALID_TIME;
         keys_data[i].time_diff      = KEYS_INVALID_TIME;
@@ -161,7 +161,7 @@ static void buttonReleased( uint32_t index )
 
 static void keys_ButtonError( uint32_t index )
 {
-    keys_data[index].state = STATE_BUTTON_UP;
+    keys_data[index].state = BUTTON_UP;
 }
 
 /*=====[Implementations of private functions]=================================*/
