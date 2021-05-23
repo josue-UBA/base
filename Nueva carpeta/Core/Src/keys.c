@@ -83,7 +83,7 @@ void keys_Update( uint32_t index )
         case STATE_BUTTON_UP:
             /* CHECK TRANSITION CONDITIONS */
 
-            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_RESET )
+            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_SET )
             {
                 keys_data[index].state = STATE_BUTTON_FALLING;
             }
@@ -93,7 +93,7 @@ void keys_Update( uint32_t index )
             /* ENTRY */
 
             /* CHECK TRANSITION CONDITIONS */
-            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_RESET )
+            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_SET )
             {
                 keys_data[index].state = STATE_BUTTON_DOWN;
 
@@ -110,7 +110,7 @@ void keys_Update( uint32_t index )
 
         case STATE_BUTTON_DOWN:
             /* CHECK TRANSITION CONDITIONS */
-            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_RESET )
+            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_SET )
             {
                 keys_data[index].state = STATE_BUTTON_RISING;
             }
@@ -121,7 +121,7 @@ void keys_Update( uint32_t index )
 
             /* CHECK TRANSITION CONDITIONS */
 
-            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_RESET )
+            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_SET )
             {
                 keys_data[index].state = STATE_BUTTON_UP;
 
