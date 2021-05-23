@@ -10,11 +10,11 @@
 /*==================[ Inclusions ]============================================*/
 #include "FreeRTOS.h"
 #include "task.h"
-//#include "sapi.h"
+#include "sapi_button.h"
 #include "keys.h"
 
 /*=====[ Definitions of private data types ]===================================*/
-const t_key_config  keys_config[] = { TEC1 };
+const t_key_config  keys_config[] = { 2 };
 
 #define KEY_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 /*=====[Definition macros of private constants]==============================*/

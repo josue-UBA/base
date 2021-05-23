@@ -28,6 +28,9 @@
 
 //#include "sapi.h"
 #include "keys.h"
+
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,6 +60,10 @@ DEBUG_PRINT_ENABLE;
 extern t_key_config* keys_config;
 #define LED_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 int bandera = 0;
+
+uint8_t dataT[30]="";
+int m = sizeof(dataT) / sizeof(dataT[0]);
+int prueba = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -318,7 +325,9 @@ void tarea_led( void* taskParmPtr )
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
 void vApplicationMallocFailedHook()
 {
-  printf( "Malloc Failed Hook!\n" );
+  snprintf((char *)dataT, m, "Malloc Failed Hook!\n\n\r");
+  HAL_UART_Transmit(&huart2, dataT, m, HAL_MAX_DELAY);
+  //printf( "Malloc Failed Hook!\n" );
   configASSERT( 0 );
 }
 /* USER CODE END 4 */

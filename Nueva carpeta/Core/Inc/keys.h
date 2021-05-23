@@ -26,7 +26,7 @@ typedef enum
 
 typedef struct
 {
-    gpioMap_t tecla;			//config
+    int tecla;			//config
 } t_key_config;
 
 typedef struct
