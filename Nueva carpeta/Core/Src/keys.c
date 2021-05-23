@@ -12,9 +12,10 @@
 #include "task.h"
 #include "sapi_button.h"
 #include "keys.h"
+#include "main.h"
 
 /*=====[ Definitions of private data types ]===================================*/
-const t_key_config  keys_config[] = { 2 };
+const t_key_config  keys_config[] = { TEC1, TEC2, TEC3, TEC4 };
 
 #define KEY_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 /*=====[Definition macros of private constants]==============================*/
@@ -55,7 +56,7 @@ void keys_Init( void )
 
     for ( i = 0 ; i < KEY_COUNT ; i++ )
     {
-        keys_data[i].state          = BUTTON_UP;  // Set initial state
+        keys_data[i].state          = STATE_BUTTON_UP;  // Set initial state
         keys_data[i].time_down      = KEYS_INVALID_TIME;
         keys_data[i].time_up        = KEYS_INVALID_TIME;
         keys_data[i].time_diff      = KEYS_INVALID_TIME;
@@ -65,7 +66,7 @@ void keys_Init( void )
               task_tecla,					// Funcion de la tarea a ejecutar
               ( const char * )"task_tecla",	// Nombre de la tarea como String amigable para el usuario
               configMINIMAL_STACK_SIZE*2,	// Cantidad de stack de la tarea
-              0,							// Parametros de tarea
+              i,							// Parametros de tarea
               tskIDLE_PRIORITY+1,			// Prioridad de la tarea
               0							// Puntero a la tarea creada en el sistema
           );
@@ -81,7 +82,8 @@ void keys_Update( uint32_t index )
     {
         case STATE_BUTTON_UP:
             /* CHECK TRANSITION CONDITIONS */
-            if( !gpioRead( keys_config[index].tecla ) )
+
+            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_RESET )
             {
                 keys_data[index].state = STATE_BUTTON_FALLING;
             }
@@ -91,7 +93,7 @@ void keys_Update( uint32_t index )
             /* ENTRY */
 
             /* CHECK TRANSITION CONDITIONS */
-            if( !gpioRead( keys_config[index].tecla ) )
+            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_RESET )
             {
                 keys_data[index].state = STATE_BUTTON_DOWN;
 
@@ -108,7 +110,7 @@ void keys_Update( uint32_t index )
 
         case STATE_BUTTON_DOWN:
             /* CHECK TRANSITION CONDITIONS */
-            if( gpioRead( keys_config[index].tecla ) )
+            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_RESET )
             {
                 keys_data[index].state = STATE_BUTTON_RISING;
             }
@@ -119,7 +121,7 @@ void keys_Update( uint32_t index )
 
             /* CHECK TRANSITION CONDITIONS */
 
-            if( gpioRead( keys_config[index].tecla ) )
+            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_RESET )
             {
                 keys_data[index].state = STATE_BUTTON_UP;
 

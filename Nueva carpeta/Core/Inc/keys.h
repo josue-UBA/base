@@ -26,7 +26,7 @@ typedef enum
 
 typedef struct
 {
-    int tecla;			//config
+	uint16_t tecla;			//config
 } t_key_config;
 
 typedef struct

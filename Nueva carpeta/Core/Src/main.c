@@ -26,7 +26,7 @@
 #include "task.h"
 #include "FreeRTOSConfig.h"
 
-//#include "sapi.h"
+#include "sapi_peripheral_map.h"
 #include "keys.h"
 
 #include <stdio.h>
@@ -40,8 +40,22 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define LEDB GPIO_PIN_0
-#define GPIO7 GPIO_PIN_4
+//pines de entrada
+#define TEC1 GPIO_PIN_1
+#define TEC2 GPIO_PIN_2
+#define TEC3 GPIO_PIN_3
+#define TEC4 GPIO_PIN_4
+//pines de salida
+#define GPIO1 GPIO_PIN_6
+#define GPIO3 GPIO_PIN_7
+#define GPIO5 GPIO_PIN_8
+#define GPIO7 GPIO_PIN_9
+//pines de salida
+#define LEDB GPIO_PIN_6
+#define LED1 GPIO_PIN_7
+#define LED2 GPIO_PIN_8
+#define LED3 GPIO_PIN_9
+
 #define RATE 1000
 /* USER CODE END PD */
 
@@ -56,14 +70,18 @@ UART_HandleTypeDef huart2;
 /* Definitions for defaultTask */
 /* USER CODE BEGIN PV */
 TaskHandle_t taskHandle1;
-DEBUG_PRINT_ENABLE;
+//DEBUG_PRINT_ENABLE;
 extern t_key_config* keys_config;
-#define LED_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
+//#define LED_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 int bandera = 0;
 
 uint8_t dataT[30]="";
 int m = sizeof(dataT) / sizeof(dataT[0]);
 int prueba = 0;
+
+uint16_t gpio[] = {GPIO7,GPIO5,GPIO3,GPIO1};
+uint16_t led[] = {LEDB,LED1,LED2,LED3};
+#define LED_COUNT sizeof(led)/sizeof(led[0])
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -151,7 +169,7 @@ int main(void)
       tarea_led,                     // Funcion de la tarea a ejecutar
       ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
       configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
-      i,                          // Parametros de tarea
+	  (void * const)i,                          // Parametros de tarea
       tskIDLE_PRIORITY+1,         // Prioridad de la tarea
       0                           // Puntero a la tarea creada en el sistema
     );
@@ -308,11 +326,11 @@ void tarea_led( void* taskParmPtr )
       {
         dif = LED_RATE;
       }
-      HAL_GPIO_WritePin(GPIOA, LEDB+index, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOA, GPIO7+index, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOA, led[index], GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOA, gpio[index], GPIO_PIN_SET);
       vTaskDelay( dif );
-      HAL_GPIO_WritePin(GPIOA, LEDB+index, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOA, GPIO7+index, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOA, led[index], GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOA, gpio[index], GPIO_PIN_RESET);
       clear_diff ( index );
     }
     else
