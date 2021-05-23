@@ -15,7 +15,7 @@
 #include "main.h"
 
 /*=====[ Definitions of private data types ]===================================*/
-const t_key_config  keys_config[] = { TEC1, TEC2, TEC3, TEC4 };
+const t_key_config  keys_config[] = { TEC1 };
 
 #define KEY_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 /*=====[Definition macros of private constants]==============================*/
@@ -110,7 +110,7 @@ void keys_Update( uint32_t index )
 
         case STATE_BUTTON_DOWN:
             /* CHECK TRANSITION CONDITIONS */
-            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_SET )
+            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) != GPIO_PIN_SET )
             {
                 keys_data[index].state = STATE_BUTTON_RISING;
             }
@@ -121,7 +121,7 @@ void keys_Update( uint32_t index )
 
             /* CHECK TRANSITION CONDITIONS */
 
-            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) == GPIO_PIN_SET )
+            if( HAL_GPIO_ReadPin(GPIOA, keys_config[index].tecla) != GPIO_PIN_SET )
             {
                 keys_data[index].state = STATE_BUTTON_UP;
 
