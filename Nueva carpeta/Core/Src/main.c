@@ -41,15 +41,15 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 //pines de entrada
-#define TEC1 GPIO_PIN_1
-#define TEC2 GPIO_PIN_2
-#define TEC3 GPIO_PIN_3
-#define TEC4 GPIO_PIN_4
+#define TEC1 GPIO_PIN_9
+#define TEC2 GPIO_PIN_10
+#define TEC3 GPIO_PIN_11
+#define TEC4 GPIO_PIN_12
 //pines de salida
-#define GPIO1 GPIO_PIN_6
-#define GPIO3 GPIO_PIN_7
-#define GPIO5 GPIO_PIN_8
-#define GPIO7 GPIO_PIN_9
+#define GPIO1 GPIO_PIN_4
+#define GPIO3 GPIO_PIN_5
+#define GPIO5 GPIO_PIN_6
+#define GPIO7 GPIO_PIN_7
 //pines de salida
 #define LEDB GPIO_PIN_6
 #define LED1 GPIO_PIN_7
@@ -176,6 +176,7 @@ int main(void)
     // Gestion de errores
     configASSERT( res == pdPASS );
   }
+  keys_Init();
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -290,7 +291,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -298,11 +299,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA0 PA4 PA5 PA6 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6;
+  /*Configure GPIO pins : PA4 PA5 PA6 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA9 PA10 PA11 PA12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
@@ -315,7 +322,7 @@ void tarea_led( void* taskParmPtr )
   // ---------- CONFIGURACIONES ------------------------------
   //TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
   //TickType_t xLastWakeTime = xTaskGetTickCount();
-  TickType_t dif;
+  TickType_t dif=0;;
   // ---------- REPETIR POR SIEMPRE --------------------------
   while( pdTRUE )
   {
