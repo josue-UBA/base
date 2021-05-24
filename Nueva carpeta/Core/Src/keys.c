@@ -26,6 +26,7 @@ const t_key_config  keys_config[] = { TEC1 };
 static void keys_ButtonError( uint32_t index );
 static void buttonPressed( uint32_t index );
 static void buttonReleased( uint32_t index );
+void tarea_led( void* taskParmPtr );
 
 /*=====[Definitions of private global variables]=============================*/
 
@@ -159,6 +160,16 @@ static void buttonReleased( uint32_t index )
 
     keys_data[index].time_up    = current_tick_count;
     keys_data[index].time_diff  = keys_data[index].time_up - keys_data[index].time_down;
+
+
+    BaseType_t res = xTaskCreate(
+      tarea_led,                     // Funcion de la tarea a ejecutar
+      ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
+      configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
+      index,                          // Parametros de tarea
+      tskIDLE_PRIORITY+1,         // Prioridad de la tarea
+      0                           // Puntero a la tarea creada en el sistema
+    );
 }
 
 static void keys_ButtonError( uint32_t index )

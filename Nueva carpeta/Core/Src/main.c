@@ -322,29 +322,15 @@ void tarea_led( void* taskParmPtr )
   // ---------- CONFIGURACIONES ------------------------------
   //TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
   //TickType_t xLastWakeTime = xTaskGetTickCount();
-  TickType_t dif=0;
+  TickType_t dif;
   // ---------- REPETIR POR SIEMPRE --------------------------
-  while( pdTRUE )
-  {
-    dif = get_diff( index );
-    if( dif != KEYS_INVALID_TIME )
-    {
-      if ( dif > LED_RATE )
-      {
-        dif = LED_RATE;
-      }
-      HAL_GPIO_WritePin(GPIOA, led[index], GPIO_PIN_SET);
-      //HAL_GPIO_WritePin(GPIOA, gpio[index], GPIO_PIN_SET);
-      vTaskDelay( dif );
-      HAL_GPIO_WritePin(GPIOA, led[index], GPIO_PIN_RESET);
-      //HAL_GPIO_WritePin(GPIOA, gpio[index], GPIO_PIN_RESET);
-      clear_diff ( index );
-    }
-    else
-    {
-      vTaskDelay( LED_RATE );
-    }
-  }
+  dif = get_diff( index );
+  HAL_GPIO_WritePin(GPIOA, led[index], GPIO_PIN_SET);
+  //HAL_GPIO_WritePin(GPIOA, gpio[index], GPIO_PIN_SET);
+  vTaskDelay( dif );
+  HAL_GPIO_WritePin(GPIOA, led[index], GPIO_PIN_RESET);
+  //HAL_GPIO_WritePin(GPIOA, gpio[index], GPIO_PIN_RESET);
+  vTaskDelete(NULL);
 }
 
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
