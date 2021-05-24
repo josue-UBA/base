@@ -40,7 +40,7 @@ typedef struct
 
 /* methods ================================================================= */
 void keys_Init( void );
-TickType_t get_diff( uint32_t index );
-void clear_diff( uint32_t index );
+TickType_t get_diff();
+void clear_diff();
 
 #endif /* PDM_ANTIRREBOTE_MEF_INC_DEBOUNCE_H_ */
