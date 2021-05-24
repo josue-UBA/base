@@ -81,7 +81,7 @@ int prueba = 0;
 
 uint16_t gpio[] = {GPIO7};
 uint16_t led[] = {LEDB};
-#define LED_COUNT sizeof(led)/sizeof(led[0])
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -163,19 +163,17 @@ int main(void)
   // Crear tarea en freeRTOS
   BaseType_t res;
   uint32_t i;
-  for ( i = 0 ; i < LED_COUNT ; i++ )
-  {
-    res = xTaskCreate(
-      tarea_led,                     // Funcion de la tarea a ejecutar
-      ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
-      configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
-	  (void * const)i,                          // Parametros de tarea
-      tskIDLE_PRIORITY+1,         // Prioridad de la tarea
-      0                           // Puntero a la tarea creada en el sistema
-    );
-    // Gestion de errores
-    configASSERT( res == pdPASS );
-  }
+  res = xTaskCreate(
+    tarea_led,                     // Funcion de la tarea a ejecutar
+    ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
+    configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
+	(void * const)i,                          // Parametros de tarea
+    tskIDLE_PRIORITY+1,         // Prioridad de la tarea
+    0                           // Puntero a la tarea creada en el sistema
+  );
+  // Gestion de errores
+  configASSERT( res == pdPASS );
+
   keys_Init();
   /* USER CODE END RTOS_THREADS */
 
@@ -333,10 +331,10 @@ void tarea_led( void* taskParmPtr )
       {
         dif = LED_RATE;
       }
-      HAL_GPIO_WritePin(GPIOA, led[index], GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOA, LEDB, GPIO_PIN_SET);
       //HAL_GPIO_WritePin(GPIOA, gpio[index], GPIO_PIN_SET);
       vTaskDelay( dif );
-      HAL_GPIO_WritePin(GPIOA, led[index], GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOA, LEDB, GPIO_PIN_RESET);
       //HAL_GPIO_WritePin(GPIOA, gpio[index], GPIO_PIN_RESET);
       clear_diff ( index );
     }

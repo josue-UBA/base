@@ -17,7 +17,7 @@
 /*=====[ Definitions of private data types ]===================================*/
 const t_key_config  keys_config[] = { TEC1 };
 
-#define KEY_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
+#define KEY_COUNT   1
 /*=====[Definition macros of private constants]==============================*/
 #define DEBOUNCE_TIME   40
 #define DEBOUNCE_TIME_MS pdMS_TO_TICKS(DEBOUNCE_TIME)
@@ -54,13 +54,11 @@ void keys_Init( void )
     BaseType_t res;
     uint32_t i;
 
-    for ( i = 0 ; i < KEY_COUNT ; i++ )
-    {
-        keys_data[i].state          = STATE_BUTTON_UP;  // Set initial state
-        keys_data[i].time_down      = KEYS_INVALID_TIME;
-        keys_data[i].time_up        = KEYS_INVALID_TIME;
-        keys_data[i].time_diff      = KEYS_INVALID_TIME;
-    }
+    keys_data[0].state          = STATE_BUTTON_UP;  // Set initial state
+    keys_data[0].time_down      = KEYS_INVALID_TIME;
+    keys_data[0].time_up        = KEYS_INVALID_TIME;
+    keys_data[0].time_diff      = KEYS_INVALID_TIME;
+
     // Crear tareas en freeRTOS
     res = xTaskCreate (
               task_tecla,					// Funcion de la tarea a ejecutar
