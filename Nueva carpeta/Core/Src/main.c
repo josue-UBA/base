@@ -63,10 +63,10 @@ GPIO_PIN_6
 GPIO_PIN_7
  */
 
-#define OUT_3 0 // GPIO_PIN_4
-#define OUT_4 0 // GPIO_PIN_5
-#define OUT_5 GPIO_PIN_6
-#define OUT_6 GPIO_PIN_7
+#define OUT_3 GPIO_PIN_6
+#define OUT_4 GPIO_PIN_5
+#define OUT_5 GPIO_PIN_7
+#define OUT_6 GPIO_PIN_4
 
 #define LED_RATE_MS 500 / portTICK_RATE_MS
 #define LOADING_RATE_MS 250
@@ -99,6 +99,7 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void gpioWrite(gpioMap_t, GPIO_PinState);
 void led_task( void* taskParmPtr );
+void leds_init( void );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
