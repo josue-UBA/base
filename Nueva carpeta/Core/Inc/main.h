@@ -71,12 +71,35 @@ void Error_Handler(void);
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
+#define OUT_3 GPIO_PIN_4
 
-#define TEC1 GPIO_PIN_9
-#define TEC2 GPIO_PIN_10
-#define TEC3 GPIO_PIN_11
-#define TEC4 GPIO_PIN_12
+#define IN_1 GPIO_PIN_9
 
+#define RATE 1000
+/*
+GPIO8 -> X_1
+GPIO7 -> X_2 x
+GPIO5 -> X_3
+GPIO3 -> X_4
+GPIO1 -> X_5
+
+TEC1 -> IN_1 -> GPIO_PIN_9
+TEC2 -> IN_2
+TEC3 -> IN_3
+TEC4 -> IN_4
+
+LEDR -> OUT_1
+LEDG -> OUT_2
+LEDB -> OUT_3 -> GPIO_PIN_4
+LED1 -> OUT_4
+LED2 -> OUT_5
+LED3 -> OUT_6
+
+GPIO_PIN_4
+GPIO_PIN_5
+GPIO_PIN_6
+GPIO_PIN_7
+ */
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

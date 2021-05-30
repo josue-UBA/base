@@ -40,28 +40,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-//pines de entrada
-#define TEC1 GPIO_PIN_9
-#define TEC2 GPIO_PIN_10
-#define TEC3 GPIO_PIN_11
-#define TEC4 GPIO_PIN_12
-//pines de salida
-#define GPIO1 GPIO_PIN_8
-#define GPIO3 GPIO_PIN_8
-#define GPIO5 GPIO_PIN_8
-#define GPIO7 GPIO_PIN_8
-//pines de salida
-#define LEDB GPIO_PIN_4
-#define LED1 GPIO_PIN_5
-#define LED2 GPIO_PIN_6
-#define LED3 GPIO_PIN_7
-
-#define RATE 1000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define LED_RATE pdMS_TO_TICKS(RATE)
+#define RATE                    1000
+#define LED_RATE_TICKS          pdMS_TO_TICKS(RATE)
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -69,19 +53,12 @@ UART_HandleTypeDef huart2;
 
 /* Definitions for defaultTask */
 /* USER CODE BEGIN PV */
-TaskHandle_t taskHandle1;
-//DEBUG_PRINT_ENABLE;
-extern t_key_config* keys_config;
-//#define LED_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 int bandera = 0;
-
 uint8_t dataT[30]="";
 int m = sizeof(dataT) / sizeof(dataT[0]);
 int prueba = 0;
-
-uint16_t gpio[] = {GPIO7};
-uint16_t led[] = {LEDB};
-#define LED_COUNT sizeof(led)/sizeof(led[0])
+extern t_key_config* keys_config;
+#define LED_COUNT   1//sizeof(keys_config)/sizeof(keys_config[0])
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,6 +73,7 @@ void clear_diff();
 // Prototipo de funcion de la tarea
 void tarea_led( void* taskParmPtr );
 void tarea_tecla( void* taskParmPtr );
+void gpioWrite(gpioMap_t, GPIO_PinState);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -119,7 +97,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  keys_Init();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -176,7 +154,6 @@ int main(void)
     // Gestion de errores
     configASSERT( res == pdPASS );
   }
-  keys_Init();
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -315,24 +292,45 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-// Implementacion de funcion de la tarea
+void gpioWrite(gpioMap_t pin, GPIO_PinState estado)
+{
+  if( pin == LEDB )
+  {
+    HAL_GPIO_WritePin(GPIOA, OUT_3, estado);
+  }
+}
+
 void tarea_led( void* taskParmPtr )
 {
   uint32_t index = ( uint32_t ) taskParmPtr;
   // ---------- CONFIGURACIONES ------------------------------
-  //TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
-  //TickType_t xLastWakeTime = xTaskGetTickCount();
+  TickType_t xPeriodicity = LED_RATE_TICKS; // Tarea periodica cada 1000 ms
+  TickType_t xLastWakeTime = xTaskGetTickCount();
   TickType_t dif;
   // ---------- REPETIR POR SIEMPRE --------------------------
-  dif = get_diff( index );
-  HAL_GPIO_WritePin(GPIOA, led[index], GPIO_PIN_SET);
-  //HAL_GPIO_WritePin(GPIOA, gpio[index], GPIO_PIN_SET);
-  vTaskDelay( dif );
-  HAL_GPIO_WritePin(GPIOA, led[index], GPIO_PIN_RESET);
-  //HAL_GPIO_WritePin(GPIOA, gpio[index], GPIO_PIN_RESET);
-  vTaskDelete(NULL);
+  while( pdTRUE )
+  {
+    dif = get_diff( index );
+    if( dif != KEYS_INVALID_TIME && dif > 0 )
+    {
+      if ( dif > LED_RATE_TICKS )
+      {
+        dif = LED_RATE_TICKS;
+      }
+      gpioWrite( LEDB+index, GPIO_PIN_SET );
+      //gpioWrite( GPIO7+index, GPIO_PIN_SET );
+      vTaskDelay( dif );
+      gpioWrite( LEDB+index, GPIO_PIN_RESET );
+      //gpioWrite( GPIO7+index, GPIO_PIN_RESET );
+      vTaskDelay( dif );
+      //vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+    }
+    else
+    {
+      vTaskDelay( LED_RATE_TICKS );
+    }
+  }
 }
-
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
 void vApplicationMallocFailedHook()
 {
