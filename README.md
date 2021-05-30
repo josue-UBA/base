@@ -11,6 +11,7 @@
 - el sistema operativo es Windows 10.
 - cada rama tiene su propio archivo README.md. En el se explica en que consiste cada rama.
 
+<!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
 # problemas
 - Tener en cuenta hasta el dia de hoy (16-05-2021) no he podido bajar el proyecto y hacer que compile en el IDE. Tener en cuenta porque se va a tener la misma dificultad cuando se intente.
 
@@ -30,7 +31,7 @@
 - el sistema operativo es Windows 10.
 - cada rama tiene su propio archivo README.md. En el se explica en que consiste cada rama.
 
-# enlaces
+## enlaces
 
 aquí se explica como trabajar con UART en tarjetas STM32
 https://www.youtube.com/watch?v=rkHBXM9AGf4
@@ -61,9 +62,6 @@ https://os.mbed.com/platforms/ST-Nucleo-F401RE/
 # B3
 ## lista de tutorial youtube
 https://www.youtube.com/playlist?list=PLfIJKC1ud8gj1t2y36sabPT4YcKzmN_5D
-
-##  cuando comience a hacer el programa necesitare esto
-https://os.mbed.com/platforms/ST-Nucleo-F401RE/
 
 clase 2
 NUCLEO-F401RE
@@ -140,10 +138,6 @@ blink infinete times led 3
 # B4
 ## enlaces
 
-aqui hay informacion de la placa
-https://os.mbed.com/platforms/ST-Nucleo-F401RE/
-
-
 link al sistema operativo freertos
 https://www.freertos.org/fr-content-src/uploads/2018/07/161204_Mastering_the_FreeRTOS_Real_Time_Kernel-A_Hands-On_Tutorial_Guide.pdf
 
@@ -192,67 +186,3 @@ luego la tarea B hace context switching con C y se suspende. Finalmente queda la
 ![image](https://user-images.githubusercontent.com/30317390/118370181-2c581e80-b56c-11eb-9dea-85b7324a1454.png)
 
 Asi queda todo como el ejercicio B3
-<!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
-
-# C3
-## informacion
-Nos guiaremos de este video para hacer el trabajo:
-
-https://www.youtube.com/watch?v=rfRJGfK2t-A
-
-En el comentario del video encontramos este link que nos guia a la pagina del autor donde podemos encontrar el codigo.
-
-https://controllerstech.com/i2c-lcd-in-stm32/
-
-En este link se encuentra informacion de la placa.
-
-https://os.mbed.com/platforms/ST-Nucleo-F401RE/
-
-
-<!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
-# C4
-## informacion
-Nos guiaremos de este video para hacer el trabajo:
-
-https://www.youtube.com/watch?v=rfRJGfK2t-A
-
-En el comentario del video encontramos este link que nos guia a la pagina del autor donde podemos encontrar el codigo.
-
-https://controllerstech.com/i2c-lcd-in-stm32/
-
-En este link se encuentra informacion de la placa.
-
-https://os.mbed.com/platforms/ST-Nucleo-F401RE/
-
-<!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
-# C5
-
-## informacion
-Nos guiaremos de este video para hacer el trabajo:
-
-https://www.youtube.com/watch?v=rfRJGfK2t-A
-
-En el comentario del video encontramos este link que nos guia a la pagina del autor donde podemos encontrar el codigo.
-
-https://controllerstech.com/i2c-lcd-in-stm32/
-
-En este link se encuentra informacion de la placa.
-
-https://os.mbed.com/platforms/ST-Nucleo-F401RE/
-
-
-<!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
-# C7
-
-## informacion
-Nos guiaremos de este video para hacer el trabajo:
-
-https://www.youtube.com/watch?v=rfRJGfK2t-A
-
-En el comentario del video encontramos este link que nos guia a la pagina del autor donde podemos encontrar el codigo.
-
-https://controllerstech.com/i2c-lcd-in-stm32/
-
-En este link se encuentra informacion de la placa.
-
-https://os.mbed.com/platforms/ST-Nucleo-F401RE/
