@@ -16,11 +16,11 @@
 #include "sapi_gpio.h"
 #include "semphr.h"
 /*=====[ Definitions of private data types ]===================================*/
-
-#define KEY_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 /*=====[Definition macros of private constants]==============================*/
+#define KEY_COUNT   sizeof(btn_t)/sizeof(btn_t[0])
 #define DEBOUNCE_TIME   40
 #define DEBOUNCE_TIME_MS pdMS_TO_TICKS(DEBOUNCE_TIME)
+#define N_SEM 						 3
 /*=====[Prototypes (declarations) of private functions]======================*/
 
 static void keys_ButtonError( uint32_t index );
@@ -30,9 +30,10 @@ void task_tecla( void* taskParmPtr );
 /*=====[Definitions of private global variables]=============================*/
 
 /*=====[Definitions of public global variables]==============================*/
-const t_key_config  keys_config[] = { TEC1 };
-t_key_data keys_data[KEY_COUNT];
+const gpioMap_t btn_t[] = {TEC1};
 extern SemaphoreHandle_t sem_btn;
+t_key_data keys_data[KEY_COUNT];
+t_key_config  keys_config[KEY_COUNT];
 /*=====[prototype of private functions]=================================*/
 
 
@@ -40,11 +41,9 @@ extern SemaphoreHandle_t sem_btn;
 TickType_t get_diff( uint32_t index )
 {
   TickType_t tiempo;
-
   taskENTER_CRITICAL();
   tiempo = keys_data[index].time_diff;
   taskEXIT_CRITICAL();
-
   return tiempo;
 }
 
@@ -65,6 +64,10 @@ void keys_Init( void )
     keys_data[i].time_down      = KEYS_INVALID_TIME;
     keys_data[i].time_up        = KEYS_INVALID_TIME;
     keys_data[i].time_diff      = KEYS_INVALID_TIME;
+    keys_config[i].btn          = btn_t[i];
+    keys_config[i].sem_btn = xSemaphoreCreateCounting( N_SEM, 0 );
+    // Gestion de errores de semaforos
+    configASSERT( keys_config[i].sem_btn !=  NULL  );
   }
   // Crear tareas en freeRTOS
   res = xTaskCreate (
@@ -86,7 +89,6 @@ void keys_Update( uint32_t index )
   {
     case STATE_BUTTON_UP:
       /* CHECK TRANSITION CONDITIONS */
-      //if(gpioRead( keys_config[index].tecla))
       if( gpioRead(keys_config[index].btn) == GPIO_PIN_SET )
       {
         keys_data[index].state = STATE_BUTTON_FALLING;
@@ -132,7 +134,7 @@ void keys_Update( uint32_t index )
     default:
       keys_ButtonError( index );
       break;
-    }
+  }
 }
 
 /*=====[Implementations of private functions]================================*/
@@ -146,7 +148,7 @@ static void buttonPressed( uint32_t index )
   taskEXIT_CRITICAL();
 }
 
-/* accion de el evento de tecla pulsada */
+/* accion de el evento de tecla liberada */
 static void buttonReleased( uint32_t index )
 {
   TickType_t current_tick_count = xTaskGetTickCount();
@@ -156,10 +158,7 @@ static void buttonReleased( uint32_t index )
   taskEXIT_CRITICAL();
   if ( keys_data[index].time_diff  > 0 )
   {
-    xSemaphoreGive( sem_btn );
-    xSemaphoreGive( sem_btn );
-    xSemaphoreGive( sem_btn );
-    xSemaphoreGive( sem_btn );
+    xSemaphoreGive( keys_config[index].sem_btn );
   }
 }
 
@@ -180,7 +179,6 @@ void task_tecla( void* taskParmPtr )
     {
       keys_Update( i );
     }
-    vTaskDelay( DEBOUNCE_TIME_MS );
-  }
+      vTaskDelay( DEBOUNCE_TIME_MS );
+    }
 }
-
