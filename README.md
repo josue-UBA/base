@@ -1,12 +1,5 @@
 <!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
 --------------------
-# timer e interrupciones
-
-video que hay que seguir: https://www.youtube.com/watch?v=VfbW6nfG4kw
-
-
-<!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
---------------------
 # informacion
 
 - la placa electronica que se esta utilizando es un F401RE.
@@ -18,12 +11,24 @@ video que hay que seguir: https://www.youtube.com/watch?v=VfbW6nfG4kw
 - el sistema operativo es Windows 10.
 - cada rama tiene su propio archivo README.md. En el se explica en que consiste cada rama.
 
+En este link se encuentra informacion de la placa.
+
+https://os.mbed.com/platforms/ST-Nucleo-F401RE/
+
+link al sistema operativo freertos
+
+https://www.freertos.org/fr-content-src/uploads/2018/07/161204_Mastering_the_FreeRTOS_Real_Time_Kernel-A_Hands-On_Tutorial_Guide.pdf
+
 <!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
 --------------------
 # problemas
 - Tener en cuenta hasta el dia de hoy (16-05-2021) no he podido bajar el proyecto y hacer que compile en el IDE. Tener en cuenta porque se va a tener la misma dificultad cuando se intente.
 
+<!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
+--------------------
+# timer e interrupciones
 
+video que hay que seguir: https://www.youtube.com/watch?v=VfbW6nfG4kw
 
 <!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
 --------------------
@@ -60,10 +65,6 @@ https://www.youtube.com/watch?v=rfRJGfK2t-A
 En el comentario del video encontramos este link que nos guia a la pagina del autor donde podemos encontrar el codigo.
 
 https://controllerstech.com/i2c-lcd-in-stm32/
-
-En este link se encuentra informacion de la placa.
-
-https://os.mbed.com/platforms/ST-Nucleo-F401RE/
 
 
 <!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
@@ -146,9 +147,6 @@ blink infinete times led 3
 --------------------
 # B4
 ## enlaces
-
-link al sistema operativo freertos
-https://www.freertos.org/fr-content-src/uploads/2018/07/161204_Mastering_the_FreeRTOS_Real_Time_Kernel-A_Hands-On_Tutorial_Guide.pdf
 
 ## comentarios
 - Al tener las tareas 2 y 3 la misma prioridad los leds prenden casi simultaneamente. Esto es porque ocurre un context switching cada ves que el tick realice una interrupcion.
