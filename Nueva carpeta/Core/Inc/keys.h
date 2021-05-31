@@ -12,7 +12,8 @@
 #define KEYS_H_
 
 #include "FreeRTOS.h"
-
+#include "sapi_peripheral_map.h"
+#include "semphr.h"
 /* public macros ================================================================= */
 #define KEYS_INVALID_TIME   -1
 /* types ================================================================= */
@@ -26,7 +27,8 @@ typedef enum
 
 typedef struct
 {
-	uint16_t tecla;			//config
+    gpioMap_t btn;			//config
+    SemaphoreHandle_t sem_btn; //semaforo
 } t_key_config;
 
 typedef struct

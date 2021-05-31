@@ -331,7 +331,7 @@ void tarea_led( void* taskParmPtr )
   TickType_t dif;  // ---------- REPETIR POR SIEMPRE --------------------------
   while( pdTRUE )
   {
-    xSemaphoreTake( sem_btn, portMAX_DELAY );			// Esperamos tecla
+    xSemaphoreTake( keys_config[index].sem_btn, portMAX_DELAY );
     dif = get_diff( index );
     clear_diff( index );
     gpioWrite( leds_t[index], GPIO_PIN_SET );

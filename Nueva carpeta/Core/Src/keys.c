@@ -88,7 +88,7 @@ void keys_Update( uint32_t index )
     case STATE_BUTTON_UP:
       /* CHECK TRANSITION CONDITIONS */
       //if(gpioRead( keys_config[index].tecla))
-      if( gpioRead(keys_config[index].tecla) == GPIO_PIN_SET )
+      if( gpioRead(keys_config[index].btn) == GPIO_PIN_SET )
       {
         keys_data[index].state = STATE_BUTTON_FALLING;
       }
@@ -96,7 +96,7 @@ void keys_Update( uint32_t index )
     case STATE_BUTTON_FALLING:
       /* ENTRY */
       /* CHECK TRANSITION CONDITIONS */
-      if( gpioRead(keys_config[index].tecla) == GPIO_PIN_SET )
+      if( gpioRead(keys_config[index].btn) == GPIO_PIN_SET )
       {
         keys_data[index].state = STATE_BUTTON_DOWN;
         /* ACCION DEL EVENTO !*/
@@ -110,7 +110,7 @@ void keys_Update( uint32_t index )
       break;
     case STATE_BUTTON_DOWN:
       /* CHECK TRANSITION CONDITIONS */
-      if( gpioRead(keys_config[index].tecla) != GPIO_PIN_SET )
+      if( gpioRead(keys_config[index].btn) != GPIO_PIN_SET )
       {
         keys_data[index].state = STATE_BUTTON_RISING;
       }
@@ -118,7 +118,7 @@ void keys_Update( uint32_t index )
     case STATE_BUTTON_RISING:
       /* ENTRY */
       /* CHECK TRANSITION CONDITIONS */
-      if( gpioRead(keys_config[index].tecla) != GPIO_PIN_SET )
+      if( gpioRead(keys_config[index].btn) != GPIO_PIN_SET )
       {
         keys_data[index].state = STATE_BUTTON_UP;
         /* ACCION DEL EVENTO ! */
