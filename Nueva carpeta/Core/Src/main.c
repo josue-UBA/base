@@ -20,13 +20,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "FreeRTOSConfig.h"
-#include "semphr.h"
+
 #include "sapi_peripheral_map.h"
 #include "keys.h"
 
@@ -41,26 +40,18 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define RATE 1000
-
-#define WELCOME_MSG  "Ejercicio D_1.\r\n"
-#define USED_UART UART_USB
-#define UART_RATE 115200
-#define MALLOC_ERROR "Malloc Failed Hook!\n"
-#define MSG_ERROR_SEM "Error al crear los semaforos.\r\n"
-#define LED_ERROR LEDR
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define LED_RATE pdMS_TO_TICKS(RATE)
+#define RATE                    1000
+#define LED_RATE_TICKS          pdMS_TO_TICKS(RATE)
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
 
 /* Definitions for defaultTask */
-
 /* USER CODE BEGIN PV */
 int bandera = 0;
 uint8_t dataT[30]="";
@@ -68,10 +59,6 @@ int m = sizeof(dataT) / sizeof(dataT[0]);
 int prueba = 0;
 extern t_key_config* keys_config;
 #define LED_COUNT   1//sizeof(keys_config)/sizeof(keys_config[0])
-
-gpioMap_t leds_t[] = {LEDB,LED1,LED2,LED3};
-gpioMap_t gpio_t[] = {GPIO7,GPIO5,GPIO3,GPIO1};
-SemaphoreHandle_t sem_btn;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -80,8 +67,12 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
+TickType_t get_diff();
+void clear_diff();
+
 // Prototipo de funcion de la tarea
 void tarea_led( void* taskParmPtr );
+void tarea_tecla( void* taskParmPtr );
 void gpioWrite(gpioMap_t, GPIO_PinState);
 /* USER CODE END PFP */
 
@@ -132,7 +123,6 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
-  sem_btn = xSemaphoreCreateBinary();
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -308,38 +298,37 @@ void gpioWrite(gpioMap_t pin, GPIO_PinState estado)
   {
     HAL_GPIO_WritePin(GPIOA, OUT_3, estado);
   }
-  else if( pin == LED1 )
-  {
-    HAL_GPIO_WritePin(GPIOA, OUT_4, estado);
-  }
-  else if( pin == LED2 )
-  {
-    HAL_GPIO_WritePin(GPIOA, OUT_5, estado);
-  }
-  else if( pin == LED3 )
-  {
-    HAL_GPIO_WritePin(GPIOA, OUT_6, estado);
-  }
 }
 
 void tarea_led( void* taskParmPtr )
 {
   uint32_t index = ( uint32_t ) taskParmPtr;
   // ---------- CONFIGURACIONES ------------------------------
-  TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
+  TickType_t xPeriodicity = LED_RATE_TICKS; // Tarea periodica cada 1000 ms
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  TickType_t dif;  // ---------- REPETIR POR SIEMPRE --------------------------
+  TickType_t dif;
+  // ---------- REPETIR POR SIEMPRE --------------------------
   while( pdTRUE )
   {
-    xSemaphoreTake( sem_btn, portMAX_DELAY );			// Esperamos tecla
     dif = get_diff( index );
-    clear_diff( index );
-    gpioWrite( leds_t[index], GPIO_PIN_SET );
-    gpioWrite( gpio_t[index], GPIO_PIN_SET );
-    vTaskDelay( dif );
-    gpioWrite( leds_t[index], GPIO_PIN_RESET );
-    gpioWrite( gpio_t[index], GPIO_PIN_RESET );
-    //vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+    if( dif != KEYS_INVALID_TIME && dif > 0 )
+    {
+      if ( dif > LED_RATE_TICKS )
+      {
+        dif = LED_RATE_TICKS;
+      }
+      gpioWrite( LEDB+index, GPIO_PIN_SET );
+      //gpioWrite( GPIO7+index, GPIO_PIN_SET );
+      vTaskDelay( dif );
+      gpioWrite( LEDB+index, GPIO_PIN_RESET );
+      //gpioWrite( GPIO7+index, GPIO_PIN_RESET );
+      vTaskDelay( dif );
+      //vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+    }
+    else
+    {
+      vTaskDelay( LED_RATE_TICKS );
+    }
   }
 }
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */

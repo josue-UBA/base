@@ -71,16 +71,9 @@ void Error_Handler(void);
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
+#define OUT_3 GPIO_PIN_4
 
 #define IN_1 GPIO_PIN_9
-#define IN_2 GPIO_PIN_10
-#define IN_3 GPIO_PIN_11
-#define IN_4 GPIO_PIN_12
-
-#define OUT_3 GPIO_PIN_4
-#define OUT_4 GPIO_PIN_5
-#define OUT_5 GPIO_PIN_6
-#define OUT_6 GPIO_PIN_7
 
 #define RATE 1000
 /*
@@ -91,16 +84,16 @@ GPIO3 -> X_4
 GPIO1 -> X_5
 
 TEC1 -> IN_1 -> GPIO_PIN_9
-TEC2 -> IN_2 -> GPIO_PIN_10
-TEC3 -> IN_3 -> GPIO_PIN_11
-TEC4 -> IN_4 -> GPIO_PIN_12
+TEC2 -> IN_2
+TEC3 -> IN_3
+TEC4 -> IN_4
 
 LEDR -> OUT_1
 LEDG -> OUT_2
 LEDB -> OUT_3 -> GPIO_PIN_4
-LED1 -> OUT_4 -> GPIO_PIN_5
-LED2 -> OUT_5 -> GPIO_PIN_6
-LED3 -> OUT_6 -> GPIO_PIN_7
+LED1 -> OUT_4
+LED2 -> OUT_5
+LED3 -> OUT_6
 
 GPIO_PIN_4
 GPIO_PIN_5
