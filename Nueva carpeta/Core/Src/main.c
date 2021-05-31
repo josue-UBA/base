@@ -78,7 +78,6 @@ SemaphoreHandle_t sem_btn;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-
 /* USER CODE BEGIN PFP */
 // Prototipo de funcion de la tarea
 void tarea_led( void* taskParmPtr );
@@ -302,32 +301,10 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void gpioWrite(gpioMap_t pin, GPIO_PinState estado)
-{
-  if( pin == LEDB )
-  {
-    HAL_GPIO_WritePin(GPIOA, OUT_3, estado);
-  }
-  else if( pin == LED1 )
-  {
-    HAL_GPIO_WritePin(GPIOA, OUT_4, estado);
-  }
-  else if( pin == LED2 )
-  {
-    HAL_GPIO_WritePin(GPIOA, OUT_5, estado);
-  }
-  else if( pin == LED3 )
-  {
-    HAL_GPIO_WritePin(GPIOA, OUT_6, estado);
-  }
-}
-
 void tarea_led( void* taskParmPtr )
 {
   uint32_t index = ( uint32_t ) taskParmPtr;
   // ---------- CONFIGURACIONES ------------------------------
-  TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
-  TickType_t xLastWakeTime = xTaskGetTickCount();
   TickType_t dif;  // ---------- REPETIR POR SIEMPRE --------------------------
   while( pdTRUE )
   {
