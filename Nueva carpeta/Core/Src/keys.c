@@ -13,10 +13,11 @@
 #include "main.h"
 #include "sapi_peripheral_map.h"
 #include "sapi_button.h"
+#include "sapi_gpio.h"
 #include "semphr.h"
 /*=====[ Definitions of private data types ]===================================*/
-const gpioMap_t btn_t[] = {TEC1,TEC2,TEC3,TEC4};
-#define KEY_COUNT   sizeof(btn_t)/sizeof(btn_t[0])
+
+#define KEY_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 /*=====[Definition macros of private constants]==============================*/
 #define DEBOUNCE_TIME   40
 #define DEBOUNCE_TIME_MS pdMS_TO_TICKS(DEBOUNCE_TIME)
@@ -25,16 +26,15 @@ const gpioMap_t btn_t[] = {TEC1,TEC2,TEC3,TEC4};
 static void keys_ButtonError( uint32_t index );
 static void buttonPressed( uint32_t index );
 static void buttonReleased( uint32_t index );
-void tarea_led( void* taskParmPtr );
-GPIO_PinState gpioRead(gpioMap_t);
-
+void task_tecla( void* taskParmPtr );
 /*=====[Definitions of private global variables]=============================*/
 
 /*=====[Definitions of public global variables]==============================*/
+const t_key_config  keys_config[] = { TEC1 };
 t_key_data keys_data[KEY_COUNT];
-t_key_config  keys_config[KEY_COUNT];
+extern SemaphoreHandle_t sem_btn;
 /*=====[prototype of private functions]=================================*/
-void task_tecla( void* taskParmPtr );
+
 
 /*=====[Implementations of public functions]=================================*/
 TickType_t get_diff( uint32_t index )
@@ -65,10 +65,6 @@ void keys_Init( void )
     keys_data[i].time_down      = KEYS_INVALID_TIME;
     keys_data[i].time_up        = KEYS_INVALID_TIME;
     keys_data[i].time_diff      = KEYS_INVALID_TIME;
-    keys_config[i].btn          = btn_t[i];
-    keys_config[i].sem_btn = xSemaphoreCreateBinary();
-    // Gestion de errores de semaforos
-    configASSERT( keys_config[i].sem_btn !=  NULL  );
   }
   // Crear tareas en freeRTOS
   res = xTaskCreate (
@@ -150,7 +146,7 @@ static void buttonPressed( uint32_t index )
   taskEXIT_CRITICAL();
 }
 
-/* accion de el evento de tecla liberada */
+/* accion de el evento de tecla pulsada */
 static void buttonReleased( uint32_t index )
 {
   TickType_t current_tick_count = xTaskGetTickCount();
@@ -160,9 +156,10 @@ static void buttonReleased( uint32_t index )
   taskEXIT_CRITICAL();
   if ( keys_data[index].time_diff  > 0 )
   {
-    gpioWrite( GPIO0, GPIO_PIN_SET );
-    xSemaphoreGive( keys_config[index].sem_btn );
-    gpioWrite( GPIO0, GPIO_PIN_RESET );
+    xSemaphoreGive( sem_btn );
+    xSemaphoreGive( sem_btn );
+    xSemaphoreGive( sem_btn );
+    xSemaphoreGive( sem_btn );
   }
 }
 

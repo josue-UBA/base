@@ -24,9 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "FreeRTOS.h"
-#include "task.h"
 #include "FreeRTOSConfig.h"
-#include "semphr.h"
 #include "sapi_peripheral_map.h"
 #include "keys.h"
 
@@ -312,9 +310,9 @@ void tarea_led( void* taskParmPtr )
   TickType_t dif;  // ---------- REPETIR POR SIEMPRE --------------------------
   while( pdTRUE )
   {
-    xSemaphoreTake( keys_config[index].sem_btn, portMAX_DELAY );
-    dif = get_diff( index );
-    clear_diff( index );
+    xSemaphoreTake( sem_btn, portMAX_DELAY );
+    dif = get_diff( 0 );
+
     gpioWrite( leds_t[index], GPIO_PIN_SET );
     gpioWrite( gpio_t[index], GPIO_PIN_SET );
     vTaskDelay( dif );
