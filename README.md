@@ -1,5 +1,12 @@
 <!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
+--------------------
+# timer e interrupciones
 
+video que hay que seguir: https://www.youtube.com/watch?v=VfbW6nfG4kw
+
+
+<!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
+--------------------
 # informacion
 
 - la placa electronica que se esta utilizando es un F401RE.
@@ -12,12 +19,14 @@
 - cada rama tiene su propio archivo README.md. En el se explica en que consiste cada rama.
 
 <!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
+--------------------
 # problemas
 - Tener en cuenta hasta el dia de hoy (16-05-2021) no he podido bajar el proyecto y hacer que compile en el IDE. Tener en cuenta porque se va a tener la misma dificultad cuando se intente.
 
 
 
 <!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
+--------------------
 # texto-UART
 
 ## informacion
@@ -40,7 +49,7 @@ aqui explican como utilizar la función snprintf
 https://stackoverflow.com/questions/5172107/how-to-concatenate-string-and-int-in-c
 
 <!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
-
+--------------------
 # LCD
 
 ## informacion
@@ -58,7 +67,7 @@ https://os.mbed.com/platforms/ST-Nucleo-F401RE/
 
 
 <!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
-
+--------------------
 # B3
 ## lista de tutorial youtube
 https://www.youtube.com/playlist?list=PLfIJKC1ud8gj1t2y36sabPT4YcKzmN_5D
@@ -134,7 +143,7 @@ TC delete
 blink infinete times led 3
 
 <!-- -------------------------------------------------------------------------------------------------------------------------------------- -->
-
+--------------------
 # B4
 ## enlaces
 
