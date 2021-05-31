@@ -27,6 +27,7 @@
 #include "FreeRTOSConfig.h"
 #include "sapi_peripheral_map.h"
 #include "keys.h"
+#include "semphr.h"
 
 #include <stdio.h>
 #include <string.h>

@@ -48,9 +48,10 @@ extern "C" {
 
 
 // FSM state names
-typedef enum{
-   BUTTON_UP,
-   BUTTON_DOWN,
-   BUTTON_FALLING,
-   BUTTON_RISING
+typedef enum
+{
+  BUTTON_UP,
+  BUTTON_DOWN,
+  BUTTON_FALLING,
+  BUTTON_RISING
 } buttonFsmState_t;
