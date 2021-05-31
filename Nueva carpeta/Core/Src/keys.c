@@ -187,27 +187,3 @@ void task_tecla( void* taskParmPtr )
   }
 }
 
-GPIO_PinState gpioRead(gpioMap_t pin)
-{
-  if( pin == TEC1 )
-  {
-    return HAL_GPIO_ReadPin(GPIOA, IN_1);
-  }
-  else if( pin == TEC2 )
-  {
-	return HAL_GPIO_ReadPin(GPIOA, IN_2);
-  }
-  else if( pin == TEC3 )
-  {
-	return HAL_GPIO_ReadPin(GPIOA, IN_3);
-  }
-  else if( pin == TEC4 )
-  {
-	return HAL_GPIO_ReadPin(GPIOA, IN_4);
-  }
-  else
-  {
-    return GPIO_PIN_RESET;
-  }
-}
-

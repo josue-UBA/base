@@ -302,25 +302,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void gpioWrite(gpioMap_t pin, GPIO_PinState estado)
-{
-  if( pin == LEDB )
-  {
-    HAL_GPIO_WritePin(GPIOA, OUT_3, estado);
-  }
-  else if( pin == LED1 )
-  {
-    HAL_GPIO_WritePin(GPIOA, OUT_4, estado);
-  }
-  else if( pin == LED2 )
-  {
-    HAL_GPIO_WritePin(GPIOA, OUT_5, estado);
-  }
-  else if( pin == LED3 )
-  {
-    HAL_GPIO_WritePin(GPIOA, OUT_6, estado);
-  }
-}
 
 void tarea_led( void* taskParmPtr )
 {
