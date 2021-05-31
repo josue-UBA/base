@@ -27,6 +27,7 @@
 #include "FreeRTOSConfig.h"
 
 #include "sapi_peripheral_map.h"
+#include "sapi_gpio.h"
 #include "keys.h"
 
 #include <stdio.h>
@@ -73,7 +74,6 @@ void clear_diff();
 // Prototipo de funcion de la tarea
 void tarea_led( void* taskParmPtr );
 void tarea_tecla( void* taskParmPtr );
-void gpioWrite(gpioMap_t, GPIO_PinState);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -292,20 +292,11 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void gpioWrite(gpioMap_t pin, GPIO_PinState estado)
-{
-  if( pin == LEDB )
-  {
-    HAL_GPIO_WritePin(GPIOA, OUT_3, estado);
-  }
-}
 
 void tarea_led( void* taskParmPtr )
 {
   uint32_t index = ( uint32_t ) taskParmPtr;
   // ---------- CONFIGURACIONES ------------------------------
-  TickType_t xPeriodicity = LED_RATE_TICKS; // Tarea periodica cada 1000 ms
-  TickType_t xLastWakeTime = xTaskGetTickCount();
   TickType_t dif;
   // ---------- REPETIR POR SIEMPRE --------------------------
   while( pdTRUE )

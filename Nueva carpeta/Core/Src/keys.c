@@ -27,7 +27,6 @@ static void keys_ButtonError( uint32_t index );
 static void buttonPressed( uint32_t index );
 static void buttonReleased( uint32_t index );
 void tarea_led( void* taskParmPtr );
-GPIO_PinState gpioRead(gpioMap_t);
 
 /*=====[Definitions of private global variables]=============================*/
 
@@ -165,17 +164,4 @@ void task_tecla( void* taskParmPtr )
     }
     vTaskDelay( DEBOUNCE_TIME_MS );
   }
-}
-
-GPIO_PinState gpioRead(gpioMap_t pin)
-{
-  if( pin == TEC1 )
-  {
-    return HAL_GPIO_ReadPin(GPIOA, IN_1);
-  }
-  else
-  {
-	return GPIO_PIN_SET;
-  }
-
 }
