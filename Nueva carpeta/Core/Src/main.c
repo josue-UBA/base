@@ -24,9 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "FreeRTOS.h"
-#include "task.h"
 #include "FreeRTOSConfig.h"
-#include "semphr.h"
 #include "sapi_peripheral_map.h"
 #include "keys.h"
 
