@@ -66,8 +66,8 @@ int bandera = 0;
 uint8_t dataT[30]="";
 int m = sizeof(dataT) / sizeof(dataT[0]);
 int prueba = 0;
-extern t_key_config* keys_config;
-#define LED_COUNT   1//sizeof(keys_config)/sizeof(keys_config[0])
+extern t_key_config keys_config[];
+#define LED_COUNT   sizeof(leds_t)/sizeof(leds_t[0])
 
 gpioMap_t leds_t[] = {LEDB,LED1,LED2,LED3};
 gpioMap_t gpio_t[] = {GPIO7,GPIO5,GPIO3,GPIO1};
