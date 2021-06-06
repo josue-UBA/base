@@ -40,18 +40,12 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define RATE 1000
-#define WELCOME_MSG  "Ejercicio D_5.\r\n"
+#define WELCOME_MSG  "Ejercicio D_6.\r\n"
 #define USED_UART UART_USB
 #define UART_RATE 115200
 #define MALLOC_ERROR "Malloc Failed Hook!\n"
 #define MSG_ERROR_SEM "Error al crear los semaforos.\r\n"
 #define LED_ERROR LEDR
-
-void gpio_init( void );
-TickType_t get_diff();
-void clear_diff();
-void tarea_led( void* taskParmPtr );
-void tarea_tecla( void* taskParmPtr );
 
 /* USER CODE END PD */
 
@@ -67,8 +61,8 @@ UART_HandleTypeDef huart2;
 /* Definitions for defaultTask */
 
 /* USER CODE BEGIN PV */
-gpioMap_t leds_t[] = {LEDB};
-gpioMap_t gpio_t[] = {GPIO7};
+gpioMap_t leds_t[] = {LEDB,LED1,LED2,LED3};
+gpioMap_t gpio_t[] = {GPIO7,GPIO5,GPIO3,GPIO1};
 extern t_key_config keys_config[];
 
 
@@ -84,6 +78,7 @@ TickType_t get_diff();
 void clear_diff();
 void tarea_led( void* taskParmPtr );
 void tarea_tecla( void* taskParmPtr );
+void gpio_init( void );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -302,32 +297,36 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+/*==================[definiciones de funciones externas]=====================*/
+
+// Implementacion de funcion de la tarea
 void tarea_led( void* taskParmPtr )
 {
-  uint32_t index = ( uint32_t ) taskParmPtr;
-  // ---------- CONFIGURACIONES ------------------------------
-  TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
-  TickType_t xLastWakeTime = xTaskGetTickCount();
-  TickType_t dif;
-  uint8_t contador = 0;
-  // ---------- REPETIR POR SIEMPRE --------------------------
-  while( TRUE )
-  {
-    contador = ( uint8_t )uxSemaphoreGetCount( keys_config[index].sem_btn );
-    printf( "Quedan %d semaforos\r\n",contador );
+    uint32_t index = ( uint32_t ) taskParmPtr;
 
-    xSemaphoreTake( keys_config[index].sem_btn, portMAX_DELAY );			// Esperamos tecla
+    // ---------- CONFIGURACIONES ------------------------------
+    TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    TickType_t dif;
+    uint8_t contador = 0;
+    // ---------- REPETIR POR SIEMPRE --------------------------
+    while( TRUE )
+    {
+        contador = ( uint8_t )uxSemaphoreGetCount( keys_config[index].sem_btn );
+        printf( "Quedan %d semaforos\r\n",contador );
 
-    xLastWakeTime = xTaskGetTickCount();
+        xSemaphoreTake( keys_config[index].sem_btn, portMAX_DELAY );			// Esperamos tecla
 
-    gpioWrite( leds_t[index], ON );
-    gpioWrite( gpio_t[index], ON );
-    vTaskDelay( xPeriodicity / 2 );
-    gpioWrite( leds_t[index], OFF );
-    gpioWrite( gpio_t[index], OFF );
+        xLastWakeTime = xTaskGetTickCount();
 
-    vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
-  }
+        gpioWrite( leds_t[index], ON );
+        gpioWrite( gpio_t[index], ON );
+        vTaskDelay( xPeriodicity / 2 );
+        gpioWrite( leds_t[index], OFF );
+        gpioWrite( gpio_t[index], OFF );
+
+        vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+    }
 }
 
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
@@ -336,7 +335,7 @@ void vApplicationMallocFailedHook()
     printf( MALLOC_ERROR );
     configASSERT( 0 );
 }
-
+/*==================[fin del archivo]========================================*/
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */

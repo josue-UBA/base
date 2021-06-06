@@ -12,7 +12,7 @@
 #include "sapi.h"
 
 /*=====[ Definitions of private data types ]===================================*/
-const gpioMap_t btn_t[] = {TEC1};
+const gpioMap_t btn_t[] = {TEC1,TEC2,TEC3,TEC4};
 
 #define KEY_COUNT   sizeof(btn_t)/sizeof(btn_t[0])
 /*=====[Definition macros of private constants]==============================*/
