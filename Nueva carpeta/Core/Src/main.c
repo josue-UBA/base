@@ -26,8 +26,7 @@
 #include "task.h"
 #include "FreeRTOSConfig.h"
 
-#include "sapi_peripheral_map.h"
-#include "sapi_gpio.h"
+#include "sapi.h"
 #include "keys.h"
 
 #include <stdio.h>
@@ -292,44 +291,50 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+/*==================[definiciones de funciones externas]=====================*/
 
+// Implementacion de funcion de la tarea
 void tarea_led( void* taskParmPtr )
 {
-  uint32_t index = ( uint32_t ) taskParmPtr;
-  // ---------- CONFIGURACIONES ------------------------------
-  TickType_t dif;
-  // ---------- REPETIR POR SIEMPRE --------------------------
-  while( pdTRUE )
-  {
-    dif = get_diff( index );
-    if( dif != KEYS_INVALID_TIME && dif > 0 )
+    uint32_t index = ( uint32_t ) taskParmPtr;
+
+    // ---------- CONFIGURACIONES ------------------------------
+    TickType_t xPeriodicity = LED_RATE_TICKS; // Tarea periodica cada 1000 ms
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    TickType_t dif;
+    // ---------- REPETIR POR SIEMPRE --------------------------
+    while( TRUE )
     {
-      if ( dif > LED_RATE_TICKS )
-      {
-        dif = LED_RATE_TICKS;
-      }
-      gpioWrite( LEDB+index, GPIO_PIN_SET );
-      //gpioWrite( GPIO7+index, GPIO_PIN_SET );
-      vTaskDelay( dif );
-      gpioWrite( LEDB+index, GPIO_PIN_RESET );
-      //gpioWrite( GPIO7+index, GPIO_PIN_RESET );
-      vTaskDelay( dif );
-      //vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+        dif = get_diff( index );
+
+        if( dif != KEYS_INVALID_TIME && dif > 0 )
+        {
+            if ( dif > LED_RATE_TICKS )
+            {
+                dif = LED_RATE_TICKS;
+            }
+            gpioWrite( LEDB+index, ON );
+            gpioWrite( GPIO7+index, ON );
+            vTaskDelay( dif );
+            gpioWrite( LEDB+index, OFF );
+            gpioWrite( GPIO7+index, OFF );
+
+            vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+        }
+        else
+        {
+            vTaskDelay( LED_RATE_TICKS );
+        }
     }
-    else
-    {
-      vTaskDelay( LED_RATE_TICKS );
-    }
-  }
 }
+
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
 void vApplicationMallocFailedHook()
 {
-  snprintf((char *)dataT, m, "Malloc Failed Hook!\n\n\r");
-  HAL_UART_Transmit(&huart2, dataT, m, HAL_MAX_DELAY);
-  //printf( "Malloc Failed Hook!\n" );
-  configASSERT( 0 );
+    printf( "Malloc Failed Hook!\n" );
+    configASSERT( 0 );
 }
+/*==================[fin del archivo]========================================*/
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
