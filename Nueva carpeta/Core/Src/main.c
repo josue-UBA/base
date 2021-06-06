@@ -25,8 +25,8 @@
 /* USER CODE BEGIN Includes */
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
-#include "sapi_peripheral_map.h"
 #include "keys.h"
+#include "sapi.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -39,18 +39,25 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define RATE 1000
-
-#define WELCOME_MSG  "Ejercicio D_1.\r\n"
+#define RATE 4000
+#define WELCOME_MSG  "Ejercicio D_5.\r\n"
 #define USED_UART UART_USB
 #define UART_RATE 115200
 #define MALLOC_ERROR "Malloc Failed Hook!\n"
 #define MSG_ERROR_SEM "Error al crear los semaforos.\r\n"
 #define LED_ERROR LEDR
+
+void gpio_init( void );
+TickType_t get_diff();
+void clear_diff();
+void tarea_led( void* taskParmPtr );
+void tarea_tecla( void* taskParmPtr );
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#define LED_COUNT   sizeof(leds_t)/sizeof(leds_t[0])
 #define LED_RATE pdMS_TO_TICKS(RATE)
 /* USER CODE END PM */
 
@@ -60,16 +67,11 @@ UART_HandleTypeDef huart2;
 /* Definitions for defaultTask */
 
 /* USER CODE BEGIN PV */
-int bandera = 0;
-uint8_t dataT[30]="";
-int m = sizeof(dataT) / sizeof(dataT[0]);
-int prueba = 0;
+gpioMap_t leds_t[] = {LEDB};
+gpioMap_t gpio_t[] = {GPIO7};
 extern t_key_config keys_config[];
-#define LED_COUNT   sizeof(leds_t)/sizeof(leds_t[0])
 
-gpioMap_t leds_t[] = {LEDB,LED1,LED2,LED3};
-gpioMap_t gpio_t[] = {GPIO7,GPIO5,GPIO3,GPIO1};
-SemaphoreHandle_t sem_btn;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -78,9 +80,10 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
-// Prototipo de funcion de la tarea
+TickType_t get_diff();
+void clear_diff();
 void tarea_led( void* taskParmPtr );
-void gpioWrite(gpioMap_t, GPIO_PinState);
+void tarea_tecla( void* taskParmPtr );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -130,7 +133,6 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
-  sem_btn = xSemaphoreCreateBinary();
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -300,35 +302,41 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
 void tarea_led( void* taskParmPtr )
 {
   uint32_t index = ( uint32_t ) taskParmPtr;
   // ---------- CONFIGURACIONES ------------------------------
   TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  TickType_t dif;  // ---------- REPETIR POR SIEMPRE --------------------------
-  while( pdTRUE )
+  TickType_t dif;
+  uint8_t contador = 0;
+  // ---------- REPETIR POR SIEMPRE --------------------------
+  while( TRUE )
   {
-    xSemaphoreTake( sem_btn, portMAX_DELAY );
-    dif = get_diff( 0 );
+    contador = ( uint8_t )uxSemaphoreGetCount( keys_config[index].sem_btn );
+    printf( "Quedan %d semaforos\r\n",contador );
 
-    gpioWrite( leds_t[index], GPIO_PIN_SET );
-    gpioWrite( gpio_t[index], GPIO_PIN_SET );
-    vTaskDelay( dif );
-    gpioWrite( leds_t[index], GPIO_PIN_RESET );
-    gpioWrite( gpio_t[index], GPIO_PIN_RESET );
-    //vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+    xSemaphoreTake( keys_config[index].sem_btn, portMAX_DELAY );			// Esperamos tecla
+
+    xLastWakeTime = xTaskGetTickCount();
+
+    gpioWrite( leds_t[index], ON );
+    gpioWrite( gpio_t[index], ON );
+    vTaskDelay( xPeriodicity / 2 );
+    gpioWrite( leds_t[index], OFF );
+    gpioWrite( gpio_t[index], OFF );
+
+    vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
   }
 }
+
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
 void vApplicationMallocFailedHook()
 {
-  snprintf((char *)dataT, m, "Malloc Failed Hook!\n\n\r");
-  HAL_UART_Transmit(&huart2, dataT, m, HAL_MAX_DELAY);
-  //printf( "Malloc Failed Hook!\n" );
-  configASSERT( 0 );
+    printf( MALLOC_ERROR );
+    configASSERT( 0 );
 }
+
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */

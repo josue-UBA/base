@@ -5,10 +5,11 @@
  *      Author: Elias
  */
 
-#include "sapi_gpio.h"
+#include "sapi.h"
 #include "main.h"
-void gpioWrite(gpioMap_t pin, GPIO_PinState estado)
+void gpioWrite(gpioMap_t pin, int sapi_estado)
 {
+  GPIO_PinState estado = sapi_estado;
   if( pin == LEDB )
   {
     HAL_GPIO_WritePin(GPIOA, OUT_3, estado);
