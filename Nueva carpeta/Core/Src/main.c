@@ -39,7 +39,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define RATE 4000
+#define RATE 1000
 #define WELCOME_MSG  "Ejercicio D_5.\r\n"
 #define USED_UART UART_USB
 #define UART_RATE 115200

@@ -11,6 +11,6 @@
 #include "sapi_peripheral_map.h"
 #include "main.h"
 void gpioWrite(gpioMap_t, int);
-GPIO_PinState gpioRead(gpioMap_t);
+int gpioRead(gpioMap_t);
 
 #endif /* INC_SAPI_GPIO_H_ */

@@ -29,26 +29,36 @@ void gpioWrite(gpioMap_t pin, int sapi_estado)
 }
 
 
-GPIO_PinState gpioRead(gpioMap_t pin)
+int gpioRead(gpioMap_t pin)
 {
+  GPIO_PinState value = 0;
   if( pin == TEC1 )
   {
-    return HAL_GPIO_ReadPin(GPIOA, IN_1);
+    value = HAL_GPIO_ReadPin(GPIOA, IN_1);
   }
   else if( pin == TEC2 )
   {
-	return HAL_GPIO_ReadPin(GPIOA, IN_2);
+    value = HAL_GPIO_ReadPin(GPIOA, IN_2);
   }
   else if( pin == TEC3 )
   {
-	return HAL_GPIO_ReadPin(GPIOA, IN_3);
+    value = HAL_GPIO_ReadPin(GPIOA, IN_3);
   }
   else if( pin == TEC4 )
   {
-	return HAL_GPIO_ReadPin(GPIOA, IN_4);
+    value = HAL_GPIO_ReadPin(GPIOA, IN_4);
   }
   else
   {
-    return GPIO_PIN_RESET;
+    value =  GPIO_PIN_RESET;
+  }
+  /* ************************* */
+  if(value == GPIO_PIN_SET)
+  {
+    return 0;
+  }
+  else
+  {
+    return 1;
   }
 }
