@@ -11,13 +11,12 @@
 #define KEYS_H_
 
 #include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
-
 #include "sapi.h"
 
 /* public macros ================================================================= */
 #define KEYS_INVALID_TIME   -1
+
+
 /* types ================================================================= */
 typedef enum
 {
@@ -29,8 +28,7 @@ typedef enum
 
 typedef struct
 {
-    gpioMap_t btn;			//config
-    SemaphoreHandle_t sem_btn; //semaforo
+    gpioMap_t tecla;			//config
 } t_key_config;
 
 typedef struct
@@ -43,8 +41,8 @@ typedef struct
 } t_key_data;
 
 /* methods ================================================================= */
-void keys_Init( void );
-TickType_t get_diff( uint32_t index );
-void clear_diff( uint32_t index );
+void keys_init( void );
+TickType_t keys_get_diff( uint32_t index );
+void keys_clear_diff( uint32_t index );
 
 #endif /* PDM_ANTIRREBOTE_MEF_INC_DEBOUNCE_H_ */
