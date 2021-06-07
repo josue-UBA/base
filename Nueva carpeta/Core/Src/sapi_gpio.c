@@ -62,3 +62,14 @@ int gpioRead(gpioMap_t pin)
     return 1;
   }
 }
+
+void mi_printf(char* texto, char* par)
+{
+	uint8_t buffer[40]="";
+	//snprintf((char *)dataT, m, texto);
+	int a = 10, b = 20, c;
+    c = a + b;
+    sprintf(buffer, texto, par);
+	int m = sizeof(buffer) / sizeof(buffer[0]);
+	HAL_UART_Transmit(&huart2, (uint8_t *)buffer, m, HAL_MAX_DELAY);
+}

@@ -34,12 +34,38 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef struct
+{
+    char*   nombre;
+    uint32_t periodicidad;
+} task_parm_t;
 
+
+task_parm_t params[] =
+{
+    { .nombre = "tarea 1", .periodicidad = 33 },
+    { "tarea 2", 55 },
+    { "tarea 3", 77},
+    { "tarea 4", 20 },
+};
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define RATE                    1000
+#define EVIDENCIAR_PROBLEMA 1
+
+#if EVIDENCIAR_PROBLEMA==1
+#define CRITICAL_DECLARE
+#define CRITICAL_CONFIG
+#define CRITICAL_START
+#define CRITICAL_END
+#else
+#include "semphr.h"
+#define CRITICAL_DECLARE    SemaphoreHandle_t mutex
+#define CRITICAL_CONFIG     mutex = xSemaphoreCreateMutex()
+#define CRITICAL_START      xSemaphoreTake( mutex , portMAX_DELAY )
+#define CRITICAL_END        xSemaphoreGive( mutex )
+#endif
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -62,8 +88,7 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
-void task_led( void* taskParmPtr );
-void keys_service_task( void* taskParmPtr );
+void tarea_printf( void* taskParmPtr );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -130,17 +155,23 @@ int main(void)
   /* add threads, ... */
   // Crear tarea en freeRTOS
   BaseType_t res;
-  res = xTaskCreate (
-    task_led,					// Funcion de la tarea a ejecutar
-    ( const char * )"task_led",	// Nombre de la tarea como String amigable para el usuario
-    configMINIMAL_STACK_SIZE*2,	// Cantidad de stack de la tarea
-    0,							// Parametros de tarea
-    tskIDLE_PRIORITY+1,			// Prioridad de la tarea
-    0							// Puntero a la tarea creada en el sistema
-  );
+  uint32_t i;
+  for ( i = 0 ; i < 4 ; i++ )
+      {
+          res = xTaskCreate(
+                    tarea_printf,                     // Funcion de la tarea a ejecutar
+                    ( const char * )"tarea_printf",   // Nombre de la tarea como String amigable para el usuario
+                    configMINIMAL_STACK_SIZE*2,       // Cantidad de stack de la tarea
+                    &params[i],                       // Parametros de tarea
+                    tskIDLE_PRIORITY+1,               // Prioridad de la tarea
+                    0                                 // Puntero a la tarea creada en el sistema
+                );
 
-  // Gestión de errores
-  configASSERT( res == pdPASS );
+          // Gestion de errores
+          configASSERT( res == pdPASS );
+      }
+     configASSERT( res == pdPASS ); // gestion de errores
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -280,36 +311,31 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void task_led( void* taskParmPtr )
+void tarea_printf( void* taskParmPtr )
 {
-    uint32_t index = ( uint32_t ) taskParmPtr;
+    task_parm_t* param = ( task_parm_t* ) taskParmPtr;
 
+    // ---------- CONFIGURACIONES ------------------------------
+    TickType_t xPeriodicity = pdMS_TO_TICKS( param->periodicidad ) ; // Tarea periodica cada 1000 ms
     TickType_t xLastWakeTime = xTaskGetTickCount();
+    TickType_t dif;
 
-    while( 1 )
+    // ---------- REPETIR POR SIEMPRE --------------------------
+    while( TRUE )
     {
-        TickType_t dif = keys_get_diff( index );
+    	  CRITICAL_START;
+          TickType_t time = xTaskGetTickCount();
+          mi_printf( "Hola soy la Tarea %s\n\r", param->nombre );
+          CRITICAL_END;
 
-        if( dif != KEYS_INVALID_TIME && dif > 0 )
-        {
-            if ( dif > LED_RATE_TICKS )
-            {
-                dif = LED_RATE_TICKS;
-            }
-            gpioWrite( LEDB, ON );
-            vTaskDelay( dif );
-            gpioWrite( LEDB, OFF );
-        }
-
-        // Envia la tarea al estado bloqueado durante xPeriodicity (delay periodico)
-        vTaskDelayUntil( &xLastWakeTime, LED_RATE_TICKS );
+        vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
     }
 }
 
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
 void vApplicationMallocFailedHook()
 {
-    printf( "Malloc Failed Hook!\n" );
+    //mi_printf("hola");
     configASSERT( 0 );
 }
 /* USER CODE END 4 */
