@@ -129,7 +129,7 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   // Crear tarea en freeRTOS
-
+  BaseType_t res;
   res = xTaskCreate (
     task_led,					// Funcion de la tarea a ejecutar
     ( const char * )"task_led",	// Nombre de la tarea como String amigable para el usuario
