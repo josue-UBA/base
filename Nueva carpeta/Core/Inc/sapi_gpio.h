@@ -12,6 +12,7 @@
 #include "main.h"
 void gpioWrite(gpioMap_t, int);
 int gpioRead(gpioMap_t);
+void gpioToggle(gpioMap_t);
 void mi_printf(char *, char*);
 
 extern UART_HandleTypeDef huart2;

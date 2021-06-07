@@ -8,6 +8,26 @@
 #include "sapi.h"
 #include "main.h"
 #include <stdio.h>
+void gpioToggle(gpioMap_t pin)
+{
+  if( pin == LEDB )
+  {
+    HAL_GPIO_TogglePin(GPIOA, OUT_3);
+  }
+  else if( pin == LED1 )
+  {
+    HAL_GPIO_TogglePin(GPIOA, OUT_4);
+  }
+  else if( pin == LED2 )
+  {
+    HAL_GPIO_TogglePin(GPIOA, OUT_5);
+  }
+  else if( pin == LED3 )
+  {
+    HAL_GPIO_TogglePin(GPIOA, OUT_6);
+  }
+}
+
 void gpioWrite(gpioMap_t pin, int sapi_estado)
 {
   GPIO_PinState estado = sapi_estado;
@@ -72,3 +92,4 @@ void mi_printf(char* texto, char* parametro_1)
 	int m = sizeof(buffer) / sizeof(buffer[0]);
 	HAL_UART_Transmit(&huart2, (uint8_t *)buffer, m, HAL_MAX_DELAY);
 }
+
