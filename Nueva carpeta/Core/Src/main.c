@@ -39,19 +39,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define WELCOME_MSG  "Ejercicio D_6.\r\n"
-#define USED_UART UART_USB
-#define UART_RATE 115200
-#define MALLOC_ERROR "Malloc Failed Hook!\n"
-#define MSG_ERROR_SEM "Error al crear los semaforos.\r\n"
-#define LED_ERROR LEDR
 #define RATE                    1000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define LED_COUNT   sizeof(leds_t)/sizeof(leds_t[0])
-#define LED_RATE pdMS_TO_TICKS(RATE)
 #define LED_RATE_TICKS          pdMS_TO_TICKS(RATE)
 /* USER CODE END PM */
 
@@ -61,10 +53,6 @@ UART_HandleTypeDef huart2;
 /* Definitions for defaultTask */
 
 /* USER CODE BEGIN PV */
-gpioMap_t leds_t[] = {LEDB,LED1,LED2,LED3};
-gpioMap_t gpio_t[] = {GPIO7,GPIO5,GPIO3,GPIO1};
-extern t_key_config keys_config[];
-
 
 /* USER CODE END PV */
 
@@ -74,9 +62,6 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
-TickType_t get_diff();
-void clear_diff();
-// Prototipo de funcion de la tarea
 void task_led( void* taskParmPtr );
 void keys_service_task( void* taskParmPtr );
 /* USER CODE END PFP */
@@ -144,23 +129,22 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   // Crear tarea en freeRTOS
-  BaseType_t res;
-  uint32_t i;
-  res = xTaskCreate (
-                task_led,					// Funcion de la tarea a ejecutar
-                ( const char * )"task_led",	// Nombre de la tarea como String amigable para el usuario
-                configMINIMAL_STACK_SIZE*2,	// Cantidad de stack de la tarea
-                0,							// Parametros de tarea
-                tskIDLE_PRIORITY+1,			// Prioridad de la tarea
-                0							// Puntero a la tarea creada en el sistema
-            );
 
-      // Gestión de errores
-      configASSERT( res == pdPASS );
+  res = xTaskCreate (
+    task_led,					// Funcion de la tarea a ejecutar
+    ( const char * )"task_led",	// Nombre de la tarea como String amigable para el usuario
+    configMINIMAL_STACK_SIZE*2,	// Cantidad de stack de la tarea
+    0,							// Parametros de tarea
+    tskIDLE_PRIORITY+1,			// Prioridad de la tarea
+    0							// Puntero a la tarea creada en el sistema
+  );
+
+  // Gestión de errores
+  configASSERT( res == pdPASS );
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-  vTaskStartScheduler();
+
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
 
@@ -169,6 +153,7 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  vTaskStartScheduler();
   while (1)
   {
     /* USER CODE END WHILE */

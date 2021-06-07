@@ -87,6 +87,7 @@ void keys_init( void )
 
 /**
    @brief Keys SM
+
    @param index
  */
 void keys_Update( uint32_t index )
@@ -158,6 +159,7 @@ void keys_Update( uint32_t index )
 
 /**
    @brief Event handler for key pressed
+
    @param index
  */
 static void keys_event_handler_button_pressed( uint32_t index )
@@ -171,6 +173,7 @@ static void keys_event_handler_button_pressed( uint32_t index )
 
 /**
    @brief Event handler for key release
+
    @param index
  */
 static void keys_event_handler_button_release( uint32_t index )
@@ -185,6 +188,7 @@ static void keys_event_handler_button_release( uint32_t index )
 
 /**
    @brief Restarts the button SM
+
    @param index
  */
 static void keys_reset( uint32_t index )
@@ -198,6 +202,7 @@ static void keys_reset( uint32_t index )
 
 /**
    @brief Keys' sevice  task implementation.
+
    @param taskParmPtr
  */
 void keys_service_task( void* taskParmPtr )
