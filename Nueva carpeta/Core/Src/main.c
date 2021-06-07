@@ -28,11 +28,16 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef enum
+{
+    STATE_OFF,
+    STATE_ON
+} led_state_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define DEFAULT_PERIOD  1000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -45,11 +50,7 @@ UART_HandleTypeDef huart2;
 
 /* Definitions for defaultTask */
 /* USER CODE BEGIN PV */
-TaskHandle_t task_handle_a;
-TaskHandle_t task_handle_b;
-TaskHandle_t task_handle_c;
-TaskHandle_t task_handle_d;
-
+uint32_t led_state;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,11 +59,8 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
-// Prototipo de funcion de la tarea
-void tarea_A_code( void*  );
-void tarea_B_code( void*  );
-void tarea_C_code( void*  );
-void tarea_D_code( void*  );
+void task_tecla( void* param );
+void task_led( void* param );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -86,7 +84,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  keys_init( );
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -127,18 +125,23 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  /* solo creo la tarea A */
-  BaseType_t res;
-  res = xTaskCreate(
-            tarea_A_code,               // Funcion de la tarea a ejecutar
-            ( const char * )"tarea_a",  // Nombre de la tarea como String amigable para el usuario
-            configMINIMAL_STACK_SIZE*2, /* tamaño del stack de cada tarea (words) */
-            NULL,                       // Parametros de tarea
-            tskIDLE_PRIORITY+4,         // Prioridad de la tarea
-            &task_handle_a            // Referencia a la tarea creada en el sistema
-        );
+      led_state = STATE_OFF;
 
-  configASSERT( res == pdPASS );
+      /* agregamos al planificador una tarea que "consulte" el estado de la tecla,
+         de manera periodica */
+      schedulerAddTask( task_tecla,   // funcion de tarea a agregar
+                        0,            // parametro de la tarea
+                        0,            // offset de ejecucion en ticks
+                        DEBOUNCE_TIME // periodicidad de ejecucion en ticks
+                      );
+
+      /* planifico que la tarea de LED se ejecute en 0 ticks */
+      schedulerAddTask(  task_led,      // funcion de tarea a agregar
+                         0,             // parametro de la tarea
+                         0,             // offset -> 0 = "ejecutate inmediatamente"
+                         DEFAULT_PERIOD // periodicidad de ejecucion en ticks
+                      );
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
