@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "sapi.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -37,10 +37,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define LED_B GPIO_PIN_0
-#define LED_1 GPIO_PIN_4
-#define LED_2 GPIO_PIN_5
-#define LED_3 GPIO_PIN_6
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -48,10 +45,11 @@ UART_HandleTypeDef huart2;
 
 /* Definitions for defaultTask */
 /* USER CODE BEGIN PV */
-TaskHandle_t taskHandle1;
-TaskHandle_t taskHandle2;
-TaskHandle_t taskHandle3;
-TaskHandle_t taskHandle4;
+TaskHandle_t task_handle_a;
+TaskHandle_t task_handle_b;
+TaskHandle_t task_handle_c;
+TaskHandle_t task_handle_d;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -60,12 +58,11 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
-void delay_con_while(uint32_t);
-void mi_funcion(uint16_t, int);
-void StartTask1(void *argument);
-void StartTask2(void *argument);
-void StartTask3(void *argument);
-void StartTask4(void *argument);
+// Prototipo de funcion de la tarea
+void tarea_A_code( void*  );
+void tarea_B_code( void*  );
+void tarea_C_code( void*  );
+void tarea_D_code( void*  );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -130,18 +127,21 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  xTaskCreate(
-    StartTask1,
-	(const char*) "task1",
-	128 * 4,
-	NULL,
-	configMAX_PRIORITIES - 1,
-	&taskHandle1
-  );
+  /* solo creo la tarea A */
+  BaseType_t res;
+  res = xTaskCreate(
+            tarea_A_code,               // Funcion de la tarea a ejecutar
+            ( const char * )"tarea_a",  // Nombre de la tarea como String amigable para el usuario
+            configMINIMAL_STACK_SIZE*2, /* tamaño del stack de cada tarea (words) */
+            NULL,                       // Parametros de tarea
+            tskIDLE_PRIORITY+4,         // Prioridad de la tarea
+            &task_handle_a            // Referencia a la tarea creada en el sistema
+        );
+
+  configASSERT( res == pdPASS );
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-  vTaskStartScheduler();
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
 
@@ -150,6 +150,7 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  vTaskStartScheduler();
   while (1)
   {
     /* USER CODE END WHILE */
@@ -270,99 +271,141 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void delay_con_while(uint32_t ms)
+
+void delay_con_while( uint32_t ms )
 {
-  volatile uint32_t dummy;
-  /* obtengo el tick absoluto */
-  TickType_t base = xTaskGetTickCount();
-  /* calculo el tick absoluto para destrabar el while */
-  TickType_t target = base + ms; /* no esta contemplado el wrap arraond */
-  while (xTaskGetTickCount() < target)
-  {
-  	dummy++;
-  }
+    volatile uint32_t dummy;
+    /* obtengo el tick absoluto */
+    TickType_t base = xTaskGetTickCount();
+    /* calculo el tick absoluto para destrabar el while */
+    TickType_t target = base  + ms ;   /* no esta contemplado el wrap arraond */
+    while(  xTaskGetTickCount() < target   )
+    {
+        dummy++;
+    }
 }
 
-void mi_funcion(uint16_t a, int b)
-{
-  for(int i=0; i < b*2; i++)
-  {
-  	HAL_GPIO_TogglePin(GPIOA, a);
-  	delay_con_while(500);
-  }
-}
-void StartTask1(void *argument)
-{
-  /* USER CODE BEGIN 5 */
 
-  UBaseType_t prioridadTarea1 = uxTaskPriorityGet(taskHandle1);
-  xTaskCreate(
-    StartTask2,
-    (const char*) "task2",
-    128 * 4,
-    NULL,
-	configMAX_PRIORITIES - 2,
-    &taskHandle2
-  );
-  xTaskCreate(
-    StartTask3,
-    (const char*) "task3",
-    128 * 4,
-    NULL,
-	configMAX_PRIORITIES - 3,
-	&taskHandle3
-  );
-  xTaskCreate(
-    StartTask4,
-    (const char*) "task4",
-    128 * 4,
-    NULL,
-	configMAX_PRIORITIES - 4,
-	&taskHandle4
-  );
-  vTaskSuspend(taskHandle1);
-  mi_funcion(LED_B, 2);
-  vTaskSuspend(taskHandle1);
-  /* Infinite loop */
-  /* USER CODE END 5 */
-}
-void StartTask2(void *argument)
+void blink_n_500( uint32_t n, uint32_t led )
 {
-  /* USER CODE BEGIN 5 */
-  mi_funcion(LED_1, 3);
-  vTaskResume(taskHandle1);
-  vTaskSuspend(taskHandle2);
-  /* Infinite loop */
-  /* USER CODE END 5 */
-}
-void StartTask3(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-  mi_funcion(LED_2, 6);
-  vTaskSuspend(taskHandle3);
-  /* Infinite loop */
-  for(;;)
-  {
-    HAL_GPIO_TogglePin(GPIOA, LED_3);
-    delay_con_while(500);
-  }
-  /* USER CODE END 5 */
-}
-void StartTask4(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-  vTaskDelete(taskHandle1);
-  vTaskDelete(taskHandle2);
-  vTaskDelete(taskHandle3);
-  /* Infinite loop */
-  for(;;)
-  {
-    HAL_GPIO_TogglePin(GPIOA, LED_3);
-    delay_con_while(500);
-  }
-  /* USER CODE END 5 */
+    /* genero 2 blinks*/
+    int blink_count  = n;
+    int cycles       = blink_count*2;
+
+    for( ; cycles>0 ; cycles-- )
+    {
+        gpioToggle( led );
+        delay_con_while( 500 );
+    }
 }
 
+/*==================[definiciones de funciones externas]=====================*/
+void tarea_A_code( void* taskParmPtr )
+{
+    BaseType_t res;
+
+    mi_printf( "Tarea A\r\n","" );
+
+    UBaseType_t my_prio = uxTaskPriorityGet( 0 );   /* se podria haber usado uxTaskPriorityGet( task_handle_task1 ) */
+
+    /* creo la tarea B con mnor prioridad que la que esta corriendo actualmente
+       No hay CC */
+    res = xTaskCreate(
+              tarea_B_code,                // Funcion de la tarea a ejecutar
+              ( const char * )"tarea_b",   // Nombre de fantasia
+              configMINIMAL_STACK_SIZE*2,  /* tamaño del stack de cada tarea (words) */
+              NULL,                        // Parametros de tarea
+              my_prio - 1,                 /* le doy menos prioridad que la tarea actual (la A) */
+              &task_handle_b               // Referencia a la tarea creada en el sistema
+          );
+
+    configASSERT( res == pdPASS );
+
+    /* creo la tarea C con mnor prioridad que la que esta corriendo actualmente
+       No hay CC */
+    res = xTaskCreate(
+              tarea_C_code,                // Funcion de la tarea a ejecutar
+              ( const char * )"tarea_c",   // Nombre de fantasia
+              configMINIMAL_STACK_SIZE*2,  /* tamaño del stack de cada tarea (words) */
+              NULL,                        // Parametros de tarea
+              my_prio - 2,                 /* le doy menos prioridad que la tarea actual (la A) */
+              &task_handle_c               // Referencia a la tarea creada en el sistema
+          );
+
+    configASSERT( res == pdPASS );
+
+    /* creo la tarea D con mnor prioridad que la que esta corriendo actualmente
+       No hay CC */
+    res = xTaskCreate(
+              tarea_D_code,                // Funcion de la tarea a ejecutar
+              ( const char * )"tarea_d",   // Nombre de fantasia
+              configMINIMAL_STACK_SIZE*2,  /* tamaño del stack de cada tarea (words) */
+              NULL,                        // Parametros de tarea
+              my_prio - 3,                 /* le doy menos prioridad que la tarea actual (la A) */
+              &task_handle_d               // Referencia a la tarea creada en el sistema
+          );
+
+    configASSERT( res == pdPASS );
+
+    /* suspendo la tarea actual */
+    vTaskSuspend( NULL );                   /* se podria haber usado vTaskSuspend( task_handle_task1 ) */
+
+    blink_n_500( 2, LEDB );
+
+    /* suspendo la tarea actual */
+    vTaskSuspend( task_handle_a );          /* se podria haber usado vTaskSuspend( 0 ) */
+
+    /*...... en una one shot real, nunca retonar sin matar la tarea */
+    //vTaskDelete(NULL);
+}
+
+void tarea_B_code( void* taskParmPtr )
+{
+    mi_printf( "Tarea B\r\n","" );
+
+    blink_n_500( 3, LED1 );
+
+    /* retomo tarea A, como tiene mayor prioridad, habra un cambio de contexto.*/
+    vTaskResume( task_handle_a );
+
+    /* suspendo la tarea actual, le va a dar el CPU a las tareas de menor prioridad (porque la tarea A esta suspendida) */
+    vTaskSuspend( task_handle_b );   /* se podria haber usado vTaskSuspend( 0 ) */
+
+    /*...... en una one shot real, nunca retonar sin matar la tarea */
+    //vTaskDelete(NULL);
+}
+
+void tarea_C_code( void* taskParmPtr )
+{
+	mi_printf( "Tarea C\r\n","" );
+
+    blink_n_500( 3, LED2 );
+
+    /* suspendo la tarea actual, le va a dar el CPU a las tareas de menor prioridad (porque la tarea A esta suspendida) */
+    vTaskSuspend( task_handle_c );      /* se podria haber usado vTaskSuspend( 0 ) */
+
+    /*...... en una one shot real, nunca retonar sin matar la tarea */
+    //vTaskDelete(NULL);
+}
+
+void tarea_D_code( void* taskParmPtr )
+{
+	mi_printf( "Tarea D\r\n","" );
+
+    /* termino todas las tareas de mas prioridad */
+    vTaskDelete( task_handle_a );
+    vTaskDelete( task_handle_b );
+    vTaskDelete( task_handle_c );
+
+    while( 1 )
+    {
+        gpioToggle( LED3 );
+        delay_con_while( 500 );
+    }
+
+    /*...... en una one shot real, nunca retonar sin matar la tarea */
+    //vTaskDelete(NULL);
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
