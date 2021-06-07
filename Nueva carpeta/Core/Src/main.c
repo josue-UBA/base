@@ -27,6 +27,8 @@
 #include "FreeRTOSConfig.h"
 #include "keys.h"
 #include "sapi.h"
+#include "task.h"
+#include "semphr.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -52,17 +54,44 @@ task_parm_t params[] =
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define EVIDENCIAR_PROBLEMA 1
+#define RATE 1000
+#define LED_RATE pdMS_TO_TICKS(RATE)
 
-#if EVIDENCIAR_PROBLEMA==1
+#define WELCOME_MSG  "Ejercicio D_1.\r\n"
+#define USED_UART UART_USB
+#define UART_RATE 9600
+#define MALLOC_ERROR "Malloc Failed Hook!\n"
+#define MSG_ERROR_SEM "Error al crear los semaforos.\r\n"
+#define LED_ERROR LEDR
+
+#define MODO 3
+
+#if MODO==0
+/* con problemas */
 #define CRITICAL_DECLARE
 #define CRITICAL_CONFIG
 #define CRITICAL_START
 #define CRITICAL_END
-#else
-#include "semphr.h"
+#endif
+#if MODO==1
+/* enter y exit critical */
+#define CRITICAL_DECLARE
+#define CRITICAL_CONFIG
+#define CRITICAL_START      taskENTER_CRITICAL();
+#define CRITICAL_END        taskEXIT_CRITICAL();
+#endif
+#if MODO==2
+/* suspend / resume all  */
+#define CRITICAL_DECLARE
+#define CRITICAL_CONFIG
+#define CRITICAL_START      vTaskSuspendAll();
+#define CRITICAL_END        xTaskResumeAll();
+#endif
+#if MODO==3
+/* mutex  */
 #define CRITICAL_DECLARE    SemaphoreHandle_t mutex
-#define CRITICAL_CONFIG     mutex = xSemaphoreCreateMutex()
+#define CRITICAL_CONFIG     mutex = xSemaphoreCreateMutex(); \
+                            configASSERT( mutex != NULL );
 #define CRITICAL_START      xSemaphoreTake( mutex , portMAX_DELAY )
 #define CRITICAL_END        xSemaphoreGive( mutex )
 #endif
@@ -79,7 +108,7 @@ UART_HandleTypeDef huart2;
 /* Definitions for defaultTask */
 
 /* USER CODE BEGIN PV */
-
+CRITICAL_DECLARE;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -134,6 +163,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
+  CRITICAL_CONFIG;
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -153,25 +183,24 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  // Crear tarea en freeRTOS
   BaseType_t res;
-  uint32_t i;
-  for ( i = 0 ; i < 4 ; i++ )
-      {
-          res = xTaskCreate(
-                    tarea_printf,                     // Funcion de la tarea a ejecutar
-                    ( const char * )"tarea_printf",   // Nombre de la tarea como String amigable para el usuario
-                    configMINIMAL_STACK_SIZE*2,       // Cantidad de stack de la tarea
-                    &params[i],                       // Parametros de tarea
-                    tskIDLE_PRIORITY+1,               // Prioridad de la tarea
-                    0                                 // Puntero a la tarea creada en el sistema
-                );
+     uint32_t i;
 
-          // Gestion de errores
-          configASSERT( res == pdPASS );
-      }
-     configASSERT( res == pdPASS ); // gestion de errores
+     // Crear tarea en freeRTOS
+     for ( i = 0 ; i < 4 ; i++ )
+     {
+         res = xTaskCreate(
+                   tarea_printf,                     // Funcion de la tarea a ejecutar
+                   ( const char * )"tarea_printf",   // Nombre de la tarea como String amigable para el usuario
+                   configMINIMAL_STACK_SIZE*2,       // Cantidad de stack de la tarea
+                   &params[i],                       // Parametros de tarea
+                   tskIDLE_PRIORITY+1,               // Prioridad de la tarea
+                   0                                 // Puntero a la tarea creada en el sistema
+               );
 
+         // Gestion de errores
+         configASSERT( res == pdPASS );
+     }
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -323,10 +352,10 @@ void tarea_printf( void* taskParmPtr )
     // ---------- REPETIR POR SIEMPRE --------------------------
     while( TRUE )
     {
-    	  CRITICAL_START;
-          TickType_t time = xTaskGetTickCount();
-          mi_printf( "Hola soy la Tarea %s\n\r", param->nombre );
-          CRITICAL_END;
+        CRITICAL_START;
+        TickType_t time = xTaskGetTickCount();
+        mi_printf( "%08u Hola soy la Tarea %s\n", param->nombre );
+        CRITICAL_END;
 
         vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
     }
@@ -335,7 +364,7 @@ void tarea_printf( void* taskParmPtr )
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
 void vApplicationMallocFailedHook()
 {
-    //mi_printf("hola");
+    printf( MALLOC_ERROR );
     configASSERT( 0 );
 }
 /* USER CODE END 4 */

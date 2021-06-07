@@ -7,6 +7,7 @@
 
 #include "sapi.h"
 #include "main.h"
+#include <stdio.h>
 void gpioWrite(gpioMap_t pin, int sapi_estado)
 {
   GPIO_PinState estado = sapi_estado;
@@ -63,13 +64,11 @@ int gpioRead(gpioMap_t pin)
   }
 }
 
-void mi_printf(char* texto, char* par)
+void mi_printf(char* texto, char* parametro_1)
 {
-	uint8_t buffer[40]="";
+	char buffer[40]="";
 	//snprintf((char *)dataT, m, texto);
-	int a = 10, b = 20, c;
-    c = a + b;
-    sprintf(buffer, texto, par);
+    sprintf(buffer, texto, parametro_1);
 	int m = sizeof(buffer) / sizeof(buffer[0]);
 	HAL_UART_Transmit(&huart2, (uint8_t *)buffer, m, HAL_MAX_DELAY);
 }
