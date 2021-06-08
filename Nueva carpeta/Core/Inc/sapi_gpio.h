@@ -10,7 +10,12 @@
 
 #include "sapi_peripheral_map.h"
 #include "main.h"
-void gpioWrite(gpioMap_t pin, GPIO_PinState estado);
-GPIO_PinState gpioRead(gpioMap_t pin);
+void gpioWrite(gpioMap_t, int);
+int gpioRead(gpioMap_t);
+void gpioToggle(gpioMap_t);
+void mi_printf(char *, char*);
+
+extern UART_HandleTypeDef huart2;
+
 
 #endif /* INC_SAPI_GPIO_H_ */

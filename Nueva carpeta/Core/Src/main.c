@@ -23,13 +23,17 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "sapi_peripheral_map.h"
-#include "keys.h"
-
 #include <stdio.h>
 #include <string.h>
+
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
+
+#include "sapi.h"
+
+#include "FreeRTOSConfig.h"
+#include "keys.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -80,7 +84,6 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 // Prototipo de funcion de la tarea
 void tarea_led( void* taskParmPtr );
-void gpioWrite(gpioMap_t, GPIO_PinState);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -165,7 +168,6 @@ int main(void)
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-  vTaskStartScheduler();
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
 
@@ -174,6 +176,7 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  vTaskStartScheduler();
   while (1)
   {
     /* USER CODE END WHILE */
