@@ -45,7 +45,8 @@
 /* USER CODE BEGIN PD */
 #define RATE 1000
 
-#define WELCOME_MSG  "Ejercicio D_1.\r\n"
+#define N_SEM 			4
+#define WELCOME_MSG  "Ejercicio D_3.\r\n"
 #define USED_UART UART_USB
 #define UART_RATE 115200
 #define MALLOC_ERROR "Malloc Failed Hook!\n"
@@ -56,24 +57,20 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 #define LED_RATE pdMS_TO_TICKS(RATE)
+#define LED_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
 
 /* Definitions for defaultTask */
-
 /* USER CODE BEGIN PV */
-int bandera = 0;
-uint8_t dataT[30]="";
-int m = sizeof(dataT) / sizeof(dataT[0]);
-int prueba = 0;
-extern t_key_config keys_config[];
-#define LED_COUNT   sizeof(leds_t)/sizeof(leds_t[0])
 
 gpioMap_t leds_t[] = {LEDB,LED1,LED2,LED3};
 gpioMap_t gpio_t[] = {GPIO7,GPIO5,GPIO3,GPIO1};
 SemaphoreHandle_t sem_btn;
+extern t_key_config* keys_config;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -82,8 +79,12 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
+TickType_t get_diff();
+void clear_diff();
+
 // Prototipo de funcion de la tarea
 void tarea_led( void* taskParmPtr );
+void tarea_tecla( void* taskParmPtr );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -133,7 +134,8 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
-  sem_btn = xSemaphoreCreateBinary();
+  sem_btn = xSemaphoreCreateCounting( N_SEM, 0 );
+  configASSERT( sem_btn !=  NULL  );
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -149,22 +151,27 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  // Crear tarea en freeRTOS
-  BaseType_t res;
-  uint32_t i;
-  for ( i = 0 ; i < LED_COUNT ; i++ )
-  {
-    res = xTaskCreate(
-      tarea_led,                     // Funcion de la tarea a ejecutar
-      ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
-      configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
-	  (void * const)i,                          // Parametros de tarea
-      tskIDLE_PRIORITY+1,         // Prioridad de la tarea
-      0                           // Puntero a la tarea creada en el sistema
-    );
-    // Gestion de errores
-    configASSERT( res == pdPASS );
-  }
+  printf( WELCOME_MSG );
+
+     BaseType_t res;
+     uint32_t i;
+
+     // Crear tarea en freeRTOS
+     for ( i = 0 ; i < LED_COUNT ; i++ )
+     {
+         res = xTaskCreate(
+                   tarea_led,                     // Funcion de la tarea a ejecutar
+                   ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
+                   configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
+                   i,                          // Parametros de tarea
+                   tskIDLE_PRIORITY+1,         // Prioridad de la tarea
+                   0                           // Puntero a la tarea creada en el sistema
+               );
+
+         // Gestion de errores
+         configASSERT( res == pdPASS );
+     }
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -306,31 +313,34 @@ static void MX_GPIO_Init(void)
 
 void tarea_led( void* taskParmPtr )
 {
-  uint32_t index = ( uint32_t ) taskParmPtr;
-  // ---------- CONFIGURACIONES ------------------------------
-  TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
-  TickType_t xLastWakeTime = xTaskGetTickCount();
-  TickType_t dif;  // ---------- REPETIR POR SIEMPRE --------------------------
-  while( pdTRUE )
-  {
-    xSemaphoreTake( sem_btn, portMAX_DELAY );
-    dif = get_diff( 0 );
+    uint32_t index = ( uint32_t ) taskParmPtr;
 
-    gpioWrite( leds_t[index], GPIO_PIN_SET );
-    gpioWrite( gpio_t[index], GPIO_PIN_SET );
-    vTaskDelay( dif );
-    gpioWrite( leds_t[index], GPIO_PIN_RESET );
-    gpioWrite( gpio_t[index], GPIO_PIN_RESET );
-    //vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
-  }
+    // ---------- CONFIGURACIONES ------------------------------
+    TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    TickType_t dif;
+    // ---------- REPETIR POR SIEMPRE --------------------------
+    while( TRUE )
+    {
+        xSemaphoreTake( sem_btn, portMAX_DELAY );			// Esperamos tecla
+
+        dif = get_diff( 0 );
+
+        gpioWrite( leds_t[index], ON );
+        gpioWrite( gpio_t[index], ON );
+        vTaskDelay( dif );
+        gpioWrite( leds_t[index], OFF );
+        gpioWrite( gpio_t[index], OFF );
+
+        //vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
+    }
 }
+
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
 void vApplicationMallocFailedHook()
 {
-  snprintf((char *)dataT, m, "Malloc Failed Hook!\n\n\r");
-  HAL_UART_Transmit(&huart2, dataT, m, HAL_MAX_DELAY);
-  //printf( "Malloc Failed Hook!\n" );
-  configASSERT( 0 );
+    printf( MALLOC_ERROR );
+    configASSERT( 0 );
 }
 /* USER CODE END 4 */
 
