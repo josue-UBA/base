@@ -316,17 +316,24 @@ void tarea_led( void* taskParmPtr )
     contador = ( uint8_t )uxSemaphoreGetCount( keys_config[index].sem_btn );
     printf( "Quedan %d semaforos\r\n",contador );
 
-    xSemaphoreTake( keys_config[index].sem_btn, portMAX_DELAY );			// Esperamos tecla
+    if(xSemaphoreTake( keys_config[index].sem_btn, pdMS_TO_TICKS(1000) ) == pdTRUE)
+    {
+        xLastWakeTime = xTaskGetTickCount();
+        gpioWrite( LEDB, ON );
+        vTaskDelay( xPeriodicity / 2 );
+        gpioWrite( LEDB, OFF );
+        vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
 
-    xLastWakeTime = xTaskGetTickCount();
+    }
+    else{
+        xLastWakeTime = xTaskGetTickCount();
+        gpioWrite( LED1, ON );
+        vTaskDelay( xPeriodicity / 2 );
+        gpioWrite( LED1, OFF );
+        vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
 
-    gpioWrite( leds_t[index], ON );
-    gpioWrite( gpio_t[index], ON );
-    vTaskDelay( xPeriodicity / 2 );
-    gpioWrite( leds_t[index], OFF );
-    gpioWrite( gpio_t[index], OFF );
+    }
 
-    vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
   }
 }
 
