@@ -10,13 +10,13 @@
 void gpioWrite(gpioMap_t pin, int sapi_estado)
 {
   GPIO_PinState estado = sapi_estado;
-  if( pin == LEDB )
+  if( pin == LEDR )
   {
-    HAL_GPIO_WritePin(GPIOA, OUT_3, estado);
+    HAL_GPIO_WritePin(GPIOA, OUT_1, estado);
   }
-  else if( pin == LED1 )
+  else if( pin == LEDG )
   {
-    HAL_GPIO_WritePin(GPIOA, OUT_4, estado);
+    HAL_GPIO_WritePin(GPIOA, OUT_2, estado);
   }
   else if( pin == LED2 )
   {

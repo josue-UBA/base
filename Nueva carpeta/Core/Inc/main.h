@@ -77,8 +77,8 @@ void Error_Handler(void);
 #define IN_3 GPIO_PIN_11
 #define IN_4 GPIO_PIN_12
 
-#define OUT_3 GPIO_PIN_4
-#define OUT_4 GPIO_PIN_5
+#define OUT_1 GPIO_PIN_4
+#define OUT_2 GPIO_PIN_5
 #define OUT_5 GPIO_PIN_6
 #define OUT_6 GPIO_PIN_7
 
@@ -95,10 +95,10 @@ TEC2 -> IN_2 -> GPIO_PIN_10
 TEC3 -> IN_3 -> GPIO_PIN_11
 TEC4 -> IN_4 -> GPIO_PIN_12
 
-LEDR -> OUT_1
-LEDG -> OUT_2
-LEDB -> OUT_3 -> GPIO_PIN_4
-LED1 -> OUT_4 -> GPIO_PIN_5
+LEDR -> OUT_1 -> GPIO_PIN_4
+LEDG -> OUT_2 -> GPIO_PIN_5
+LEDB -> OUT_3
+LED1 -> OUT_4
 LED2 -> OUT_5 -> GPIO_PIN_6
 LED3 -> OUT_6 -> GPIO_PIN_7
 

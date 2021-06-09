@@ -308,28 +308,29 @@ void tarea_led( void* taskParmPtr )
   // ---------- CONFIGURACIONES ------------------------------
   TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  TickType_t dif;
-  uint8_t contador = 0;
   // ---------- REPETIR POR SIEMPRE --------------------------
   while( TRUE )
   {
-    contador = ( uint8_t )uxSemaphoreGetCount( keys_config[index].sem_btn );
-    printf( "Quedan %d semaforos\r\n",contador );
-
+	  /* Espera 1 segundo a que se libere el semaforo. Si se libera antes de cumplir un segundo
+	   * desde que se llamo la funcion, esta ultima retorna el valor pdTRUE y destella el led
+	   * verde */
     if(xSemaphoreTake( keys_config[index].sem_btn, pdMS_TO_TICKS(1000) ) == pdTRUE)
     {
-        xLastWakeTime = xTaskGetTickCount();
-        gpioWrite( LEDB, ON );
-        vTaskDelay( xPeriodicity / 2 );
-        gpioWrite( LEDB, OFF );
+        //xLastWakeTime = xTaskGetTickCount();
+        gpioWrite( LEDG, ON );
+        vTaskDelay( xPeriodicity / 4 );
+        gpioWrite( LEDG, OFF );
         vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
 
     }
+    /* Si no se libera el semaforo, retorna pdFALSE y el led rojo destella cada segundo.
+     *
+     */
     else{
-        xLastWakeTime = xTaskGetTickCount();
-        gpioWrite( LED1, ON );
-        vTaskDelay( xPeriodicity / 2 );
-        gpioWrite( LED1, OFF );
+        //xLastWakeTime = xTaskGetTickCount();
+        gpioWrite( LEDR, ON );
+        vTaskDelay( xPeriodicity / 4 );
+        gpioWrite( LEDR, OFF );
         vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
 
     }

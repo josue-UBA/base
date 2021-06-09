@@ -18,7 +18,7 @@ const gpioMap_t btn_t[] = {TEC1};
 /*=====[Definition macros of private constants]==============================*/
 #define DEBOUNCE_TIME   40
 #define DEBOUNCE_TIME_MS pdMS_TO_TICKS(DEBOUNCE_TIME)
-#define N_SEM 						 3
+#define N_SEM 						 1
 /*=====[Prototypes (declarations) of private functions]======================*/
 
 static void keys_ButtonError( uint32_t index );
