@@ -20,15 +20,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "FreeRTOS.h"
+#include "task.h"
 #include "FreeRTOSConfig.h"
 #include "sapi.h"
-#include "task.h"
 #include "keys.h"
-#include "semphr.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -36,51 +34,26 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct
-{
-    char* text;
-    uint32_t led;
-    uint32_t periods;
-} t_params;
-
-t_params params[] = { {"tarea b", LED1, 3},{"tarea c",LED2,5} };
-
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define CUENTAS_1MS             (9251*2)
-
-/* en 1 usa semaforos en 0 usa mutex*/
-#define EVIDENCIAR_PROBLEMA     1
-
-#if EVIDENCIAR_PROBLEMA==1
-#define CRITICAL_CONFIG     mutex = xSemaphoreCreateBinary()
-#else
-#define CRITICAL_CONFIG     mutex = xSemaphoreCreateMutex()
-#endif
-
-#define CRITICAL_DECLARE    SemaphoreHandle_t mutex
-#define CRITICAL_START      xSemaphoreTake( mutex , portMAX_DELAY )
-#define CRITICAL_END        xSemaphoreGive( mutex )
+#define RATE 1000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define LED_RATE_TICKS          pdMS_TO_TICKS(RATE)
+#define LED_RATE pdMS_TO_TICKS(RATE)
+#define LED_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
-/* Definitions for defaultTask */
 
+/* Definitions for defaultTask */
 /* USER CODE BEGIN PV */
-CRITICAL_DECLARE;
-TaskHandle_t task_handles_a;
-TaskHandle_t task_handles_b;
-TaskHandle_t task_handles_c;
-TaskHandle_t task_handles_d;
+extern t_key_config* keys_config;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -89,8 +62,12 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
-void tarea_2( void*  );
-void tarea_3( void*  );
+TickType_t get_diff();
+void clear_diff();
+
+// Prototipo de funcion de la tarea
+void tarea_led( void* taskParmPtr );
+void tarea_tecla( void* taskParmPtr );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -114,7 +91,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  keys_Init();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -136,7 +113,6 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
-  CRITICAL_CONFIG;
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -157,40 +133,26 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   BaseType_t res;
-
-      // ---------- CONFIGURACIONES ------------------------------
-
-      printf( "\nEjercicio E4\n" );
-
+      uint32_t i;
 
       // Crear tarea en freeRTOS
+      for ( i = 0 ; i < LED_COUNT ; i++ )
+      {
+          res = xTaskCreate(
+                    tarea_led,                     // Funcion de la tarea a ejecutar
+                    ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
+                    configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
+                    i,                          // Parametros de tarea
+                    tskIDLE_PRIORITY+1,         // Prioridad de la tarea
+                    0                           // Puntero a la tarea creada en el sistema
+                );
 
-
-      res = xTaskCreate(
-                tarea_2,
-                ( const char * )"tarea_2",
-                configMINIMAL_STACK_SIZE*2,
-                NULL,
-                tskIDLE_PRIORITY+5,
-                NULL
-            );
-
-      configASSERT( res == pdPASS );
-      res = xTaskCreate(
-                tarea_3,
-                ( const char * )"tarea_3",
-                configMINIMAL_STACK_SIZE*2,
-                NULL,
-                tskIDLE_PRIORITY+5,
-                NULL
-            );
-
-      configASSERT( res == pdPASS );
-
+          // Gestion de errores
+          configASSERT( res == pdPASS );
+      }
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
 
@@ -326,77 +288,45 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void delay_con_while( uint32_t ms )
+// Implementacion de funcion de la tarea
+void tarea_led( void* taskParmPtr )
 {
-    TickType_t base = xTaskGetTickCount();
-    TickType_t target = base  + ms ;   //habria que contemplar el wrap around
-    while(  xTaskGetTickCount() < target   )
+    uint32_t index = ( uint32_t ) taskParmPtr;
+
+    // ---------- CONFIGURACIONES ------------------------------
+    //TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
+    //TickType_t xLastWakeTime = xTaskGetTickCount();
+    TickType_t dif;
+    // ---------- REPETIR POR SIEMPRE --------------------------
+    while( pdTRUE )
     {
-        //taskYIELD();
+        dif = get_diff( index );
+
+        if( dif != KEYS_INVALID_TIME )
+        {
+            if ( dif > LED_RATE )
+            {
+                dif = LED_RATE;
+            }
+            gpioWrite( LEDB+index, ON );
+            gpioWrite( GPIO7+index, ON );
+            vTaskDelay( dif );
+            gpioWrite( LEDB+index, OFF );
+            gpioWrite( GPIO7+index, OFF );
+            clear_diff ( index );
+        }
+        else
+        {
+            vTaskDelay( LED_RATE );
+        }
     }
 }
 
-/**
-   @brief blink bloqueante.
-   @param n
-   @param led
- */
-void blink_n_500( uint32_t n, uint32_t led )
+/* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
+void vApplicationMallocFailedHook()
 {
-    /* genero 2 blinks*/
-    int blink_count  = n;
-    int cycles       = blink_count*2;
-
-    for( ; cycles>0 ; cycles-- )
-    {
-        gpioToggle( led );
-        delay_con_while( 500 );
-    }
-}
-
-/*==================[definiciones de funciones externas]=====================*/
-
-void tarea_2( void* taskParmPtr )
-{
-    t_params * param = ( t_params* ) taskParmPtr;
-
-    /* bloqueo la tarea, para que la tarea A tome el CPU */
-    vTaskDelay( 100 / portTICK_RATE_MS );
-
-
-    TickType_t tini = xTaskGetTickCount();
-
-    blink_n_500( param->periods, param->led );
-
-
-    mi_printf( "Soy %s y tarde en ejecutarme ms \n", param->text);
-
-    /* me auto destruyo */
-    vTaskDelete( 0 );
-}
-
-void tarea_3( void* taskParmPtr )
-{
-    char* texto = ( char* ) taskParmPtr;
-
-    TickType_t tini = xTaskGetTickCount();
-
-    mi_printf( "Hola ! Soy %s y quiero usar un recurso\n", texto );
-
-    CRITICAL_START;
-
-    mi_printf( "Soy %s y tarde ms en acceder al recurso\n", texto );
-
-    /* con este delay pierdo ciclos de CPU simulando un procesamiento de un cierto tiempo
-       para la tarea */
-    delay_con_while( 1000 );
-
-    mi_printf( "Chau ! Soy %s y tarde en ejecutarme  ms \n", texto );
-
-    CRITICAL_END;
-
-    /* adios */
-    vTaskDelete( 0 );
+    printf( "Malloc Failed Hook!\n" );
+    configASSERT( 0 );
 }
 
 /* USER CODE END 4 */
