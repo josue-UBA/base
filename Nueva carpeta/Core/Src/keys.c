@@ -9,16 +9,18 @@
 
 /*==================[ Inclusions ]============================================*/
 #include "keys.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
 #include "sapi.h"
 
 /*=====[ Definitions of private data types ]===================================*/
-const gpioMap_t btn_t[] = {TEC1,TEC2,TEC3,TEC4};
+const t_key_config  keys_config[] = { TEC1, TEC2, TEC3,TEC4 };
 
-#define KEY_COUNT   sizeof(btn_t)/sizeof(btn_t[0])
+#define KEY_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 /*=====[Definition macros of private constants]==============================*/
 #define DEBOUNCE_TIME   40
 #define DEBOUNCE_TIME_MS pdMS_TO_TICKS(DEBOUNCE_TIME)
-#define N_SEM 						 3
 /*=====[Prototypes (declarations) of private functions]======================*/
 
 static void keys_ButtonError( uint32_t index );
@@ -29,8 +31,7 @@ static void buttonReleased( uint32_t index );
 
 /*=====[Definitions of public global variables]==============================*/
 t_key_data keys_data[KEY_COUNT];
-t_key_config  keys_config[KEY_COUNT];
-int contador = 500;
+
 /*=====[prototype of private functions]=================================*/
 void task_tecla( void* taskParmPtr );
 
@@ -39,18 +40,16 @@ TickType_t get_diff( uint32_t index )
 {
     TickType_t tiempo;
 
-    taskENTER_CRITICAL();
     tiempo = keys_data[index].time_diff;
-    taskEXIT_CRITICAL();
 
     return tiempo;
 }
 
 void clear_diff( uint32_t index )
 {
-    taskENTER_CRITICAL();
+
     keys_data[index].time_diff = KEYS_INVALID_TIME;
-    taskEXIT_CRITICAL();
+
 }
 
 void keys_Init( void )
@@ -64,14 +63,7 @@ void keys_Init( void )
         keys_data[i].time_down      = KEYS_INVALID_TIME;
         keys_data[i].time_up        = KEYS_INVALID_TIME;
         keys_data[i].time_diff      = KEYS_INVALID_TIME;
-
-        keys_config[i].btn          = btn_t[i];
-        keys_config[i].sem_btn = xSemaphoreCreateCounting( N_SEM, 0 );
-
-        // Gestion de errores de semaforos
-        configASSERT( keys_config[i].sem_btn !=  NULL  );
     }
-
     // Crear tareas en freeRTOS
     res = xTaskCreate (
               task_tecla,					// Funcion de la tarea a ejecutar
@@ -93,7 +85,7 @@ void keys_Update( uint32_t index )
     {
         case STATE_BUTTON_UP:
             /* CHECK TRANSITION CONDITIONS */
-            if( !gpioRead( keys_config[index].btn ) )
+            if( !gpioRead( keys_config[index].tecla ) )
             {
                 keys_data[index].state = STATE_BUTTON_FALLING;
             }
@@ -103,7 +95,7 @@ void keys_Update( uint32_t index )
             /* ENTRY */
 
             /* CHECK TRANSITION CONDITIONS */
-            if( !gpioRead( keys_config[index].btn ) )
+            if( !gpioRead( keys_config[index].tecla ) )
             {
                 keys_data[index].state = STATE_BUTTON_DOWN;
 
@@ -120,7 +112,7 @@ void keys_Update( uint32_t index )
 
         case STATE_BUTTON_DOWN:
             /* CHECK TRANSITION CONDITIONS */
-            if( gpioRead( keys_config[index].btn ) )
+            if( gpioRead( keys_config[index].tecla ) )
             {
                 keys_data[index].state = STATE_BUTTON_RISING;
             }
@@ -131,13 +123,12 @@ void keys_Update( uint32_t index )
 
             /* CHECK TRANSITION CONDITIONS */
 
-            if( gpioRead( keys_config[index].btn ) )
+            if( gpioRead( keys_config[index].tecla ) )
             {
                 keys_data[index].state = STATE_BUTTON_UP;
 
                 /* ACCION DEL EVENTO ! */
                 buttonReleased( index );
-                mi_funcion(index);
             }
             else
             {
@@ -160,9 +151,7 @@ static void buttonPressed( uint32_t index )
 {
     TickType_t current_tick_count = xTaskGetTickCount();
 
-    taskENTER_CRITICAL();
     keys_data[index].time_down = current_tick_count;
-    taskEXIT_CRITICAL();
 }
 
 /* accion de el evento de tecla liberada */
@@ -170,35 +159,13 @@ static void buttonReleased( uint32_t index )
 {
     TickType_t current_tick_count = xTaskGetTickCount();
 
-    taskENTER_CRITICAL();
     keys_data[index].time_up    = current_tick_count;
     keys_data[index].time_diff  = keys_data[index].time_up - keys_data[index].time_down;
-    taskEXIT_CRITICAL();
+}
 
-    if ( keys_data[index].time_diff  > 0 )
-    {
-        xSemaphoreGive( keys_config[index].sem_btn );
-    }
-}
-void mi_funcion( uint32_t index )
-{
-  keys_data[0].time_diff;
-  if(index == 0)
-  {
-	if(contador>900) contador=900;
-	else contador = contador + 100;
-  }
-  else if(index == 1)
-  {
-    if(contador<100)contador = 100;
-    else contador = contador - 100;
-  }
-}
 static void keys_ButtonError( uint32_t index )
 {
-    taskENTER_CRITICAL();
     keys_data[index].state = BUTTON_UP;
-    taskEXIT_CRITICAL();
 }
 
 /*=====[Implementations of private functions]=================================*/

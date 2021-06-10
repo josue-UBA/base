@@ -160,7 +160,7 @@ int main(void)
 
       // ---------- CONFIGURACIONES ------------------------------
 
-      printf( "\nEjercicio D5\n" );
+      printf( "\nEjercicio E4\n" );
 
 
       // Crear tarea en freeRTOS
@@ -168,7 +168,7 @@ int main(void)
 
       res = xTaskCreate(
                 tarea_2,
-                ( const char * )"tarea_init",
+                ( const char * )"tarea_2",
                 configMINIMAL_STACK_SIZE*2,
                 NULL,
                 tskIDLE_PRIORITY+5,
@@ -178,7 +178,7 @@ int main(void)
       configASSERT( res == pdPASS );
       res = xTaskCreate(
                 tarea_3,
-                ( const char * )"tarea_init",
+                ( const char * )"tarea_3",
                 configMINIMAL_STACK_SIZE*2,
                 NULL,
                 tskIDLE_PRIORITY+5,
