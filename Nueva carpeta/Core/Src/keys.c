@@ -15,7 +15,7 @@
 #include "sapi.h"
 
 /*=====[ Definitions of private data types ]===================================*/
-const t_key_config  keys_config[] = { TEC1, TEC2, TEC3,TEC4 };
+const t_key_config  keys_config[] = { TEC1, TEC2 };
 
 #define KEY_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 /*=====[Definition macros of private constants]==============================*/
@@ -26,12 +26,12 @@ const t_key_config  keys_config[] = { TEC1, TEC2, TEC3,TEC4 };
 static void keys_ButtonError( uint32_t index );
 static void buttonPressed( uint32_t index );
 static void buttonReleased( uint32_t index );
-
+void funcion();
 /*=====[Definitions of private global variables]=============================*/
 
 /*=====[Definitions of public global variables]==============================*/
 t_key_data keys_data[KEY_COUNT];
-
+int contador = 500;
 /*=====[prototype of private functions]=================================*/
 void task_tecla( void* taskParmPtr );
 
@@ -129,6 +129,7 @@ void keys_Update( uint32_t index )
 
                 /* ACCION DEL EVENTO ! */
                 buttonReleased( index );
+                funcion();
             }
             else
             {
@@ -145,7 +146,21 @@ void keys_Update( uint32_t index )
 }
 
 /*=====[Implementations of private functions]================================*/
-
+void funcion( index) {
+	if (index == 0) {
+		if (contador > 900) {
+			contador = 900;
+		} else {
+			contador = contador + 100;
+		}
+	} else {
+		if (contador < 100) {
+			contador = 100;
+		} else {
+			contador = contador - 100;
+		}
+	}
+}
 /* accion de el evento de tecla pulsada */
 static void buttonPressed( uint32_t index )
 {
