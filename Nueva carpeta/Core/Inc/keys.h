@@ -7,14 +7,11 @@
  * Version: v1.2
  *===========================================================================*/
 
+/*==================[ Inclusions ]============================================*/
 #ifndef KEYS_H_
 #define KEYS_H_
 
 #include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
-
-#include "sapi.h"
 
 /* public macros ================================================================= */
 #define KEYS_INVALID_TIME   -1
@@ -29,8 +26,7 @@ typedef enum
 
 typedef struct
 {
-    gpioMap_t btn;			//config
-    SemaphoreHandle_t sem_btn; //semaforo
+	uint16_t tecla;			//config
 } t_key_config;
 
 typedef struct
