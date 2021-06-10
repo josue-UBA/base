@@ -73,7 +73,7 @@ t_params params[] = { {"tarea b", LED1, 3},{"tarea c",LED2,5} };
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
-
+int contador = 500;
 /* Definitions for defaultTask */
 
 /* USER CODE BEGIN PV */
@@ -365,14 +365,26 @@ void blink_n_500( uint32_t n, uint32_t led )
 }
 
 /*==================[definiciones de funciones externas]=====================*/
-void tarea_iniciadora( void* taskParmPtr )
+void tarea_1( void* taskParmPtr )
 {
-int contador = 0;
+  while(0)
+  {
+    if(tecla == 1)
+    {
+	  if(contafor>900) contador=900;
+	  else contador = contador + 100;
+  }
+  if(tecla_2 ==1)
+  {
+    if(contador<100)contador =100;
+    else contador = contador - 100;
+  }
+}
 
 
 }
 
-void tarea_BC_code( void* taskParmPtr )
+void tarea_2( void* taskParmPtr )
 {
     t_params * param = ( t_params* ) taskParmPtr;
 
@@ -391,7 +403,7 @@ void tarea_BC_code( void* taskParmPtr )
     vTaskDelete( 0 );
 }
 
-void tarea_AD_common( void* taskParmPtr )
+void tarea_3( void* taskParmPtr )
 {
     char* texto = ( char* ) taskParmPtr;
 
@@ -415,17 +427,6 @@ void tarea_AD_common( void* taskParmPtr )
     vTaskDelete( 0 );
 }
 
-void tarea_A_code( void* taskParmPtr )
-{
-    tarea_AD_common( taskParmPtr );
-}
-
-void tarea_D_code( void* taskParmPtr )
-{
-    /* bloqueo la tarea, para que la tarea A tome el CPU */
-    vTaskDelay( 100 / portTICK_RATE_MS );
-    tarea_AD_common( taskParmPtr );
-}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
