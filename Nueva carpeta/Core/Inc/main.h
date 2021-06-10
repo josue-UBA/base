@@ -74,8 +74,6 @@ void Error_Handler(void);
 
 #define IN_1 GPIO_PIN_9
 #define IN_2 GPIO_PIN_10
-#define IN_3 GPIO_PIN_11
-#define IN_4 GPIO_PIN_12
 
 #define OUT_3 GPIO_PIN_4
 #define OUT_4 GPIO_PIN_5

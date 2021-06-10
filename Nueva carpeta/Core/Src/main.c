@@ -325,6 +325,8 @@ void tarea_2( void* taskParmPtr )
             vTaskDelay( LED_RATE );
         }
     }
+    int a = 0;
+    int b = 0;
 }
 void tarea_3( void* taskParmPtr )
 {
