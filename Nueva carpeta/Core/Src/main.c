@@ -73,7 +73,6 @@ t_params params[] = { {"tarea b", LED1, 3},{"tarea c",LED2,5} };
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
-int contador = 500;
 /* Definitions for defaultTask */
 
 /* USER CODE BEGIN PV */
@@ -90,7 +89,6 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
-void tarea_1( void*  );
 void tarea_2( void*  );
 void tarea_3( void*  );
 /* USER CODE END PFP */
@@ -166,16 +164,8 @@ int main(void)
 
 
       // Crear tarea en freeRTOS
-      res = xTaskCreate(
-                tarea_1,
-                ( const char * )"tarea_init",
-                configMINIMAL_STACK_SIZE*2,
-                NULL,
-                tskIDLE_PRIORITY+5,
-                NULL
-            );
 
-      configASSERT( res == pdPASS );
+
       res = xTaskCreate(
                 tarea_2,
                 ( const char * )"tarea_init",
@@ -365,24 +355,6 @@ void blink_n_500( uint32_t n, uint32_t led )
 }
 
 /*==================[definiciones de funciones externas]=====================*/
-void tarea_1( void* taskParmPtr )
-{
-  while(0)
-  {
-    if(tecla == 1)
-    {
-	  if(contafor>900) contador=900;
-	  else contador = contador + 100;
-  }
-  if(tecla_2 ==1)
-  {
-    if(contador<100)contador =100;
-    else contador = contador - 100;
-  }
-}
-
-
-}
 
 void tarea_2( void* taskParmPtr )
 {

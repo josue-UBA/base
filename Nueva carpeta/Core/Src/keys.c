@@ -30,6 +30,7 @@ static void buttonReleased( uint32_t index );
 /*=====[Definitions of public global variables]==============================*/
 t_key_data keys_data[KEY_COUNT];
 t_key_config  keys_config[KEY_COUNT];
+int contador = 500;
 /*=====[prototype of private functions]=================================*/
 void task_tecla( void* taskParmPtr );
 
@@ -136,6 +137,7 @@ void keys_Update( uint32_t index )
 
                 /* ACCION DEL EVENTO ! */
                 buttonReleased( index );
+                mi_funcion(index);
             }
             else
             {
@@ -178,7 +180,20 @@ static void buttonReleased( uint32_t index )
         xSemaphoreGive( keys_config[index].sem_btn );
     }
 }
-
+void mi_funcion( uint32_t index )
+{
+  keys_data[0].time_diff;
+  if(index == 0)
+  {
+	if(contador>900) contador=900;
+	else contador = contador + 100;
+  }
+  else if(index == 1)
+  {
+    if(contador<100)contador = 100;
+    else contador = contador - 100;
+  }
+}
 static void keys_ButtonError( uint32_t index )
 {
     taskENTER_CRITICAL();
