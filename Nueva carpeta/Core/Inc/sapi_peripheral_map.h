@@ -39,7 +39,7 @@
 
 /*==================[inclusions]=============================================*/
 
-//#include "sapi_datatypes.h"
+#include "main.h"
 
 /*==================[c++]====================================================*/
 #ifdef __cplusplus
@@ -74,24 +74,7 @@ typedef enum {
 
    // Configure GPIO pins for each board
 
-   #if (BOARD == ciaa_nxp)
-      DOUT0_C = -3, DOUT1_C = -3, DOUT2_C = -3, DOUT3_C = -3, DIN_COM = -3,
-      VCC = -2, VIN_24V = -2, VOUT_24V = -2,
-      GND = -1, GNDA0 = -1, GNDA1 = -1, GND0 = -1, GND1 = -1, GND2 = -1, GND3 = -1,
-      // Born digital inputs
-      I0   = 0, I1   = 1, I2   = 2, I3   = 3, I4   = 4, I5   = 5, I6   = 6, I7   = 7,
-      DI0  = 0, DI1  = 1, DI2  = 2, DI3  = 3, DI4  = 4, DI5  = 5, DI6  = 6, DI7  = 7,
-      DIN0 = 0, DIN1 = 1, DIN2 = 2, DIN3 = 3, DIN4 = 4, DIN5 = 5, DIN6 = 6, DIN7 = 7,
-      // Born digital outputs
-      Q0    = 8, Q1    = 9, Q2    = 10, Q3    = 11, Q4    = 12, Q5    = 13, Q6    = 14, Q7    = 15,
-      DO0   = 8, DO1   = 9, DO2   = 10, DO3   = 11, DO4   = 12, DO5   = 13, DO6   = 14, DO7   = 15,
-      DOUT0 = 8, DOUT1 = 9, DOUT2 = 10, DOUT3 = 11, DOUT4 = 12, DOUT5 = 13, DOUT6 = 14, DOUT7 = 15,
-      // P12 header
-      GPIO0 = 16, GPIO1 = 17, GPIO2 = 18, GPIO3 = 19, GPIO7 = 20, GPIO8 = 21,
-      // P14 header
-      SPI_MISO = 22, SPI_MOSI = 23, SPI_CS = 23,
-      //#error CIAA-NXP
-   #elif (BOARD == edu_ciaa_nxp)
+
       VCC = -2, GND = -1,
       // P1 header
       T_FIL1,    T_COL2,    T_COL0,    T_FIL2,      T_FIL3,  T_FIL0,     T_COL1,
@@ -112,9 +95,6 @@ typedef enum {
       // 40   41     42     43     44     45
       LEDR,  LEDG,  LEDB,  LED1,  LED2,  LED3,
       //#error EDU-CIAA-NXP
-   #else
-      #error BOARD not supported yet!
-   #endif
 } gpioMap_t;
 
 // Configure GPIO pins for each board
