@@ -66,8 +66,8 @@ TickType_t get_diff();
 void clear_diff();
 
 // Prototipo de funcion de la tarea
-void tarea_2( void* taskParmPtr );
-void tarea_3( void* taskParmPtr );
+void tarea_led( void* taskParmPtr );
+void tarea_tecla( void* taskParmPtr );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -133,28 +133,23 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   BaseType_t res;
-  uint32_t i;
+      uint32_t i;
 
-  // Crear tarea en freeRTOS
-  res = xTaskCreate(
-    tarea_2,                     // Funcion de la tarea a ejecutar
-    ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
-    configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
-    0,                          // Parametros de tarea
-    tskIDLE_PRIORITY+1,         // Prioridad de la tarea
-    0                           // Puntero a la tarea creada en el sistema
-  );
-  res = xTaskCreate(
-      tarea_3,                     // Funcion de la tarea a ejecutar
-      ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
-      configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
-      0,                          // Parametros de tarea
-      tskIDLE_PRIORITY+1,         // Prioridad de la tarea
-      0                           // Puntero a la tarea creada en el sistema
-    );
+      // Crear tarea en freeRTOS
+      for ( i = 0 ; i < LED_COUNT ; i++ )
+      {
+          res = xTaskCreate(
+                    tarea_led,                     // Funcion de la tarea a ejecutar
+                    ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
+                    configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
+                    i,                          // Parametros de tarea
+                    tskIDLE_PRIORITY+1,         // Prioridad de la tarea
+                    0                           // Puntero a la tarea creada en el sistema
+                );
 
-  // Gestion de errores
-  configASSERT( res == pdPASS );
+          // Gestion de errores
+          configASSERT( res == pdPASS );
+      }
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -294,7 +289,7 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 // Implementacion de funcion de la tarea
-void tarea_2( void* taskParmPtr )
+void tarea_led( void* taskParmPtr )
 {
     uint32_t index = ( uint32_t ) taskParmPtr;
 
@@ -325,12 +320,8 @@ void tarea_2( void* taskParmPtr )
             vTaskDelay( LED_RATE );
         }
     }
-    int a = 0;
-    int b = 0;
 }
-void tarea_3( void* taskParmPtr )
-{
-}
+
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
 void vApplicationMallocFailedHook()
 {

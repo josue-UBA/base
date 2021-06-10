@@ -13,7 +13,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "sapi.h"
-
+#include <string.h>
 /*=====[ Definitions of private data types ]===================================*/
 const t_key_config  keys_config[] = { TEC1, TEC2 };
 
@@ -129,7 +129,7 @@ void keys_Update( uint32_t index )
 
                 /* ACCION DEL EVENTO ! */
                 buttonReleased( index );
-                funcion();
+                funcion(index);
             }
             else
             {
@@ -146,20 +146,23 @@ void keys_Update( uint32_t index )
 }
 
 /*=====[Implementations of private functions]================================*/
-void funcion( index) {
+void funcion( uint32_t index) {
 	if (index == 0) {
-		if (contador > 900) {
+		if (contador >= 900) {
 			contador = 900;
 		} else {
 			contador = contador + 100;
 		}
 	} else {
-		if (contador < 100) {
+		if (contador <= 100) {
 			contador = 100;
 		} else {
 			contador = contador - 100;
 		}
 	}
+	char snum[5];
+	itoa(contador, snum, 10);
+	mi_printf("el numedo es %s\n",snum);
 }
 /* accion de el evento de tecla pulsada */
 static void buttonPressed( uint32_t index )
