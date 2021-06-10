@@ -27,6 +27,7 @@
 #include "FreeRTOSConfig.h"
 #include "sapi.h"
 #include "task.h"
+#include "keys.h"
 #include "semphr.h"
 
 #include <stdio.h>
@@ -89,10 +90,9 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
-void tarea_iniciadora( void*  );
-void tarea_A_code( void*  );
-void tarea_D_code( void*  );
-void tarea_BC_code( void*  );
+void tarea_1( void*  );
+void tarea_2( void*  );
+void tarea_3( void*  );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -164,18 +164,30 @@ int main(void)
 
       printf( "\nEjercicio D5\n" );
 
-      if( EVIDENCIAR_PROBLEMA )
-      {
-          mi_printf( "Ejecucion usando semaforos\n","" );
-      }
-      else
-      {
-    	  mi_printf( "Ejecucion usando mutex\n","" );
-      }
 
       // Crear tarea en freeRTOS
       res = xTaskCreate(
-                tarea_iniciadora,
+                tarea_1,
+                ( const char * )"tarea_init",
+                configMINIMAL_STACK_SIZE*2,
+                NULL,
+                tskIDLE_PRIORITY+5,
+                NULL
+            );
+
+      configASSERT( res == pdPASS );
+      res = xTaskCreate(
+                tarea_2,
+                ( const char * )"tarea_init",
+                configMINIMAL_STACK_SIZE*2,
+                NULL,
+                tskIDLE_PRIORITY+5,
+                NULL
+            );
+
+      configASSERT( res == pdPASS );
+      res = xTaskCreate(
+                tarea_3,
                 ( const char * )"tarea_init",
                 configMINIMAL_STACK_SIZE*2,
                 NULL,
@@ -355,65 +367,9 @@ void blink_n_500( uint32_t n, uint32_t led )
 /*==================[definiciones de funciones externas]=====================*/
 void tarea_iniciadora( void* taskParmPtr )
 {
-    BaseType_t res;
-
-    UBaseType_t my_prio = uxTaskPriorityGet( 0 );   /* se podria haber usado uxTaskPriorityGet( task_handles[0] ) */
-
-    /* Creo las tareas A B C y D.
-       No hay cambios de contexto porque la esta tarea tiene mayor prioridad de las creadas
-    */
-    res = xTaskCreate(
-              tarea_A_code,
-              ( const char * ) "tarea_a",
-              configMINIMAL_STACK_SIZE*3,
-              "tarea  a",                               /* Parametros de tarea */
-              my_prio - 3,                              /* minima prioridad del sistema */
-              &task_handles_a                           /* handle de la tarea */
-          );
-
-    res = xTaskCreate(
-              tarea_BC_code,
-              ( const char * ) "tarea_b",
-              configMINIMAL_STACK_SIZE*3,
-              &params[0],                               /* Parametros de tarea */
-              my_prio - 2,                              /* prioridad media del sistema */
-              &task_handles_b                           /* handle de la tarea */
-          );
-
-    configASSERT( res == pdPASS );
-
-    res = xTaskCreate(
-              tarea_BC_code,
-              ( const char * ) "tarea_c",
-              configMINIMAL_STACK_SIZE*3,
-              &params[1],                               /* Parametros de tarea */
-              my_prio - 2,                              /* prioridad media del sistema */
-              &task_handles_c                           /* handle de la tarea */
-          );
-
-    configASSERT( res == pdPASS );
-
-    res = xTaskCreate(
-              tarea_D_code,
-              ( const char * )"tarea_d",
-              configMINIMAL_STACK_SIZE*3,
-              "tarea  d",                               /* Parametros de tarea */
-              my_prio - 1,                              /* prioridad alta del sistema */
-              &task_handles_d                           /* handle de la tarea */
-          );
-
-    configASSERT( res == pdPASS );
+int contador = 0;
 
 
-    CRITICAL_CONFIG;
-
-#if EVIDENCIAR_PROBLEMA==1
-    /* en este caso, lo libero para poder user al semaforo binario como control de seccion critica.  */
-    xSemaphoreGive( mutex );
-#endif
-
-    /* ya cumpli mi mision */
-    vTaskDelete( 0 );
 }
 
 void tarea_BC_code( void* taskParmPtr )
