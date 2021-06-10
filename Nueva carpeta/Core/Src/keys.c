@@ -26,14 +26,14 @@ const t_key_config  keys_config[] = { TEC1, TEC2 };
 static void keys_ButtonError( uint32_t index );
 static void buttonPressed( uint32_t index );
 static void buttonReleased( uint32_t index );
-void funcion();
+void funcion( uint32_t);
 /*=====[Definitions of private global variables]=============================*/
 
 /*=====[Definitions of public global variables]==============================*/
 t_key_data keys_data[KEY_COUNT];
-int contador = 500;
 /*=====[prototype of private functions]=================================*/
 void task_tecla( void* taskParmPtr );
+extern int contador;
 
 /*=====[Implementations of public functions]=================================*/
 TickType_t get_diff( uint32_t index )
@@ -146,23 +146,35 @@ void keys_Update( uint32_t index )
 }
 
 /*=====[Implementations of private functions]================================*/
-void funcion( uint32_t index) {
-	if (index == 0) {
-		if (contador >= 900) {
-			contador = 900;
-		} else {
-			contador = contador + 100;
-		}
-	} else {
-		if (contador <= 100) {
-			contador = 100;
-		} else {
-			contador = contador - 100;
-		}
-	}
-	char snum[5];
-	itoa(contador, snum, 10);
-	mi_printf("el numedo es %s\n",snum);
+void funcion( uint32_t index)
+{
+  taskENTER_CRITICAL();
+  if (index == 0)
+  {
+    if (contador >= 900)
+    {
+      contador = 900;
+    }
+    else
+    {
+      contador = contador + 100;
+    }
+  }
+  else
+  {
+    if (contador <= 100)
+    {
+      contador = 100;
+    }
+    else
+    {
+      contador = contador - 100;
+    }
+  }
+  char snum[5];
+  itoa(contador, snum, 10);
+  mi_printf("el numedo es %s\n",snum);
+  taskEXIT_CRITICAL();
 }
 /* accion de el evento de tecla pulsada */
 static void buttonPressed( uint32_t index )

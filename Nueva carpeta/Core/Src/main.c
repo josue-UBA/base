@@ -31,7 +31,6 @@
 #include <stdio.h>
 #include <string.h>
 /* USER CODE END Includes */
-
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
@@ -50,10 +49,12 @@
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
+int contador = 500;
 
 /* Definitions for defaultTask */
 /* USER CODE BEGIN PV */
 extern t_key_config* keys_config;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,8 +67,8 @@ TickType_t get_diff();
 void clear_diff();
 
 // Prototipo de funcion de la tarea
-void tarea_led( void* taskParmPtr );
-void tarea_tecla( void* taskParmPtr );
+void tarea_1( void* taskParmPtr );
+void tarea_2( void* taskParmPtr );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -133,23 +134,29 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   BaseType_t res;
-      uint32_t i;
+  // Crear tarea en freeRTOS
+  res = xTaskCreate(
+    tarea_1,                     // Funcion de la tarea a ejecutar
+    ( const char * )"tarea_1",   // Nombre de la tarea como String amigable para el usuario
+    configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
+    0,                          // Parametros de tarea
+    tskIDLE_PRIORITY+1,         // Prioridad de la tarea
+    0                           // Puntero a la tarea creada en el sistema
+  );
+  // Gestion de errores
+  configASSERT( res == pdPASS );
 
-      // Crear tarea en freeRTOS
-      for ( i = 0 ; i < LED_COUNT ; i++ )
-      {
-          res = xTaskCreate(
-                    tarea_led,                     // Funcion de la tarea a ejecutar
-                    ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
-                    configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
-                    i,                          // Parametros de tarea
-                    tskIDLE_PRIORITY+1,         // Prioridad de la tarea
-                    0                           // Puntero a la tarea creada en el sistema
-                );
+  res = xTaskCreate(
+    tarea_2,                     // Funcion de la tarea a ejecutar
+    ( const char * )"tarea_2",   // Nombre de la tarea como String amigable para el usuario
+    configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
+    0,                          // Parametros de tarea
+    tskIDLE_PRIORITY+1,         // Prioridad de la tarea
+    0                           // Puntero a la tarea creada en el sistema
+  );
+  // Gestion de errores
+  configASSERT( res == pdPASS );
 
-          // Gestion de errores
-          configASSERT( res == pdPASS );
-      }
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -289,9 +296,22 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 // Implementacion de funcion de la tarea
-void tarea_led( void* taskParmPtr )
+void tarea_1( void* taskParmPtr )
 {
-    uint32_t index = ( uint32_t ) taskParmPtr;
+    // ---------- CONFIGURACIONES ------------------------------
+    //TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
+    //TickType_t xLastWakeTime = xTaskGetTickCount();
+    TickType_t dif;
+    // ---------- REPETIR POR SIEMPRE --------------------------
+    while( pdTRUE )
+    {
+		gpioWrite( LEDB, ON );
+		vTaskDelay( pdMS_TO_TICKS(contador/2) );
+		gpioWrite( LEDB, OFF );
+		vTaskDelay( pdMS_TO_TICKS(contador/2) );
+    }
+}
+void tarea_2( void* taskParmPtr ){
 
     // ---------- CONFIGURACIONES ------------------------------
     //TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
@@ -300,28 +320,25 @@ void tarea_led( void* taskParmPtr )
     // ---------- REPETIR POR SIEMPRE --------------------------
     while( pdTRUE )
     {
-        dif = get_diff( index );
-
-        if( dif != KEYS_INVALID_TIME )
-        {
-            if ( dif > LED_RATE )
-            {
-                dif = LED_RATE;
-            }
-            gpioWrite( LEDB+index, ON );
-            gpioWrite( GPIO7+index, ON );
-            vTaskDelay( dif );
-            gpioWrite( LEDB+index, OFF );
-            gpioWrite( GPIO7+index, OFF );
-            clear_diff ( index );
-        }
-        else
-        {
-            vTaskDelay( LED_RATE );
-        }
+      gpioWrite( LED1, ON );
+      vTaskDelay( pdMS_TO_TICKS(2000) );
+      gpioWrite( LED1, OFF );
+      vTaskDelay( pdMS_TO_TICKS(contador*2) );
+      taskENTER_CRITICAL();
+      if(contador <= 100)
+      {
+        contador = 100;
+      }
+      else
+      {
+        contador = contador - 100;
+      }
+      char snum[5];
+      itoa(contador, snum, 10);
+      mi_printf("el numedo es %s\n",snum);
+      taskEXIT_CRITICAL();
     }
 }
-
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
 void vApplicationMallocFailedHook()
 {
