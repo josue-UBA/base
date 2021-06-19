@@ -27,12 +27,12 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-#include "semphr.h"
-
 #include "sapi.h"
 
 #include "FreeRTOSConfig.h"
 #include "keys.h"
+#include "queue.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,7 +44,7 @@
 /* USER CODE BEGIN PD */
 #define RATE 1000
 
-#define WELCOME_MSG  "Ejercicio F_1.\r\n"
+#define WELCOME_MSG  "Ejercicio F_2.\r\n"
 #define USED_UART UART_USB
 #define UART_RATE 115200
 #define MALLOC_ERROR "Malloc Failed Hook!\n"
@@ -54,8 +54,9 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define LED_RATE pdMS_TO_TICKS(RATE)
 #define LED_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
+#define LED_RATE pdMS_TO_TICKS(RATE)
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -65,8 +66,10 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 extern t_key_config* keys_config;
-gpioMap_t leds_t[] = {LEDB};
-gpioMap_t gpio_t[] = {GPIO7};
+
+//-------
+const gpioMap_t leds_t[] = {LEDB};
+const gpioMap_t gpio_t[] = {GPIO7};
 QueueHandle_t queue_tec_pulsada;
 /* USER CODE END PV */
 
@@ -148,28 +151,26 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  BaseType_t res;
+  uint32_t i;
 
-     printf( WELCOME_MSG );
+  	// Crear tarea en freeRTOS
+  	for ( i = 0 ; i < LED_COUNT ; i++ )
+  	{
+  		res = xTaskCreate(
+  				  tarea_led,                     // Funcion de la tarea a ejecutar
+  				  ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
+  				  configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
+  				  i,                          // Parametros de tarea
+  				  tskIDLE_PRIORITY+1,         // Prioridad de la tarea
+  				  0                           // Puntero a la tarea creada en el sistema
+  			  );
 
-     BaseType_t res;
-     uint32_t i;
+  		// Gestion de errores
+  		configASSERT( res == pdPASS );
+  	}
 
-     // Crear tarea en freeRTOS
-     for ( i = 0 ; i < LED_COUNT ; i++ )
-     {
-         res = xTaskCreate(
-                   tarea_led,                     // Funcion de la tarea a ejecutar
-                   ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
-                   configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
-                   i,                          // Parametros de tarea
-                   tskIDLE_PRIORITY+1,         // Prioridad de la tarea
-                   0                           // Puntero a la tarea creada en el sistema
-               );
 
-         // Gestion de errores
-         configASSERT( res == pdPASS );
-     }
-     //configASSERT( 0 );
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -308,36 +309,41 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-// Implementacion de funcion de la tarea
 void tarea_led( void* taskParmPtr )
 {
-    uint32_t index = ( uint32_t ) taskParmPtr;
+	uint32_t index = ( uint32_t ) taskParmPtr;
 
-    // ---------- CONFIGURACIONES ------------------------------
-    TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
-    TickType_t xLastWakeTime = xTaskGetTickCount();
-    TickType_t dif;
-    // ---------- REPETIR POR SIEMPRE --------------------------
-    while( TRUE )
-    {
-    	printf("antes de queue.\n\r");
-        xQueueReceive( queue_tec_pulsada, &dif,  portMAX_DELAY );			// Esperamos tecla
-    	printf("despues de queue.\n\r");
-        gpioWrite( leds_t[index], ON );
-        gpioWrite( gpio_t[index], ON );
-        vTaskDelay( keys_data[index].time_diff );
-        gpioWrite( leds_t[index], OFF );
-        gpioWrite( gpio_t[index], OFF );
-    }
+	// ---------- CONFIGURACIONES ------------------------------
+	TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
+	TickType_t xLastWakeTime = xTaskGetTickCount();
+	TickType_t dif = 0;
+	// ---------- REPETIR POR SIEMPRE --------------------------
+	while( TRUE )
+	{
+		if( xQueueReceive( queue_tec_pulsada, &dif,  0 ) == pdTRUE )			// Esperamos tecla
+		{
+			if ( dif > xPeriodicity )
+			{
+				dif = xPeriodicity;
+			}
+
+			gpioWrite( leds_t[index], ON );
+			gpioWrite( gpio_t[index], ON );
+			vTaskDelay( dif );
+			gpioWrite( leds_t[index], OFF );
+			gpioWrite( gpio_t[index], OFF );
+		}
+		vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+	}
 }
 
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
 void vApplicationMallocFailedHook()
 {
-    printf( MALLOC_ERROR );
-    configASSERT( 0 );
+	printf( "Malloc Failed Hook!\n" );
+	configASSERT( 0 );
 }
-
+/*==================[fin del archivo]========================================*/
 int __io_putchar(int ch)
 {
  uint8_t c[1];

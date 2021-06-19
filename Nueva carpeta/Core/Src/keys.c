@@ -12,9 +12,9 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-#include "semphr.h"
-
 #include "sapi.h"
+
+#include "queue.h"
 
 /*=====[ Definitions of private data types ]===================================*/
 
@@ -28,17 +28,27 @@ static void keys_event_handler_button_pressed( uint32_t index );
 static void keys_event_handler_button_release( uint32_t index );
 
 /*=====[Definitions of private global variables]=============================*/
+
 const t_key_config  keys_config[] = { TEC1 };
 
 #define KEY_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
 
-/*=====[Definitions of public global variables]==============================*/
 t_key_data keys_data[KEY_COUNT];
+
+/*=====[Definitions of public global variables]==============================*/
+
 extern QueueHandle_t queue_tec_pulsada;
 /*=====[prototype of private functions]=================================*/
 void keys_service_task( void* taskParmPtr );
 
 /*=====[Implementations of public functions]=================================*/
+
+/**
+   @brief Obtiene el tiempo de la ultima pulsacion de la tecla indicada.
+
+   @param index
+   @return TickType_t
+ */
 TickType_t keys_get_diff( uint32_t index )
 {
 	TickType_t tiempo;
@@ -50,6 +60,11 @@ TickType_t keys_get_diff( uint32_t index )
 	return tiempo;
 }
 
+/**
+   @brief Borra el tiempo de la ultima pulsacion de la tecla indicada.
+
+   @param index
+ */
 void keys_clear_diff( uint32_t index )
 {
 	taskENTER_CRITICAL();
@@ -89,11 +104,6 @@ void keys_init( void )
 }
 
 // keys_ Update State Function
-/**
-   @brief Keys SM for polled operation
-
-   @param index
- */
 void keys_Update( uint32_t index )
 {
 	switch( keys_data[index].state )
@@ -161,6 +171,7 @@ void keys_Update( uint32_t index )
 
 /*=====[Implementations of private functions]================================*/
 
+
 /**
    @brief   Manejador del evento de tecla pulsada
 
@@ -172,7 +183,6 @@ static void keys_event_handler_button_pressed( uint32_t index )
 
 	taskENTER_CRITICAL();
 	keys_data[index].time_down = current_tick_count;
-	printf("tarea keys_service_task presion: %d\n\r",keys_data[index].time_down);
 	taskEXIT_CRITICAL();
 }
 
@@ -189,15 +199,14 @@ static void keys_event_handler_button_release( uint32_t index )
 	taskENTER_CRITICAL();
 	keys_data[index].time_up    = current_tick_count;
 	keys_data[index].time_diff  = keys_data[index].time_up - keys_data[index].time_down;
-	printf("tarea keys_service_task tiempo total: %d\n\r",keys_data[index].time_diff);
 	taskEXIT_CRITICAL();
 
-	if ( keys_data[index].time_diff  > 0 )
+	if ( keys_data[index].time_diff > 0 )
 	{
 		xQueueSend( queue_tec_pulsada, &( keys_data[index].time_diff ),  portMAX_DELAY  );
 	}
-}
 
+}
 /**
    @brief Restarts the button SM
 
@@ -220,6 +229,7 @@ static void keys_reset( uint32_t index )
 void keys_service_task( void* taskParmPtr )
 {
 	uint32_t i;
+
 	while( TRUE )
 	{
 		for ( i = 0 ; i < KEY_COUNT ; i++ )

@@ -12,7 +12,6 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-#include "semphr.h"
 #include "sapi.h"
 
 /* public macros ================================================================= */
@@ -38,8 +37,6 @@ typedef struct
     TickType_t time_down;		//timestamp of the last High to Low transition of the key
     TickType_t time_up;		    //timestamp of the last Low to High transition of the key
     TickType_t time_diff;	    //variables
-
-    SemaphoreHandle_t sem_tec_pulsada; //semaforo
 } t_key_data;
 
 /* methods ================================================================= */
