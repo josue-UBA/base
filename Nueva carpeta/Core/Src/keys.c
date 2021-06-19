@@ -13,7 +13,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "sapi.h"
-#include <string.h>
+#include <stdio.h>
 /*=====[ Definitions of private data types ]===================================*/
 const t_key_config  keys_config[] = { TEC1, TEC2 };
 
@@ -171,9 +171,7 @@ void funcion( uint32_t index)
       contador = contador - 100;
     }
   }
-  char snum[5];
-  itoa(contador, snum, 10);
-  mi_printf("el numedo es %s\n",snum);
+  printf("mi funcion: el numedo es %d\n\r",contador);
   taskEXIT_CRITICAL();
 }
 /* accion de el evento de tecla pulsada */
