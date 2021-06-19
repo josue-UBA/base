@@ -23,15 +23,17 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "sapi.h"
-#include "task.h"
-#include "semphr.h"
-#include "keys.h"
-
 #include <stdio.h>
 #include <string.h>
+
+#include "FreeRTOS.h"
+#include "task.h"
+#include "sapi.h"
+
+#include "FreeRTOSConfig.h"
+#include "keys.h"
+#include "queue.h"
+#include "semphr.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,18 +45,24 @@
 /* USER CODE BEGIN PD */
 #define RATE 1000
 #define LED_RATE pdMS_TO_TICKS(RATE)
+#define SEPARACION_MS 150
+#define T_SEPARACION pdMS_TO_TICKS(SEPARACION_MS)
+#define PRINT_RATE_MS 500
+#define PRINT_RATE pdMS_TO_TICKS(PRINT_RATE_MS)
 
-#define WELCOME_MSG  "Ejercicio F_1.\r\n"
+#define WELCOME_MSG  "Ejercicio F_5.\r\n"
 #define USED_UART UART_USB
 #define UART_RATE 115200
 #define MALLOC_ERROR "Malloc Failed Hook!\n"
 #define MSG_ERROR_QUE "Error al crear la cola.\r\n"
+#define MSG_ERROR_MTX "Error al crear el mutex.\r\n"
 #define LED_ERROR LEDR
+#define N_QUEUE 	8
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define LED_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
+#define LED_COUNT   sizeof(leds_t)/sizeof(leds_t[0])
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -63,10 +71,10 @@ UART_HandleTypeDef huart2;
 /* Definitions for defaultTask */
 
 /* USER CODE BEGIN PV */
-gpioMap_t leds_t[] = {LEDB};
-gpioMap_t gpio_t[] = {GPIO7};
-QueueHandle_t queue_tec_pulsada;
 extern t_key_config* keys_config;
+const gpioMap_t leds_t[] = { LEDB, LED1 };
+const gpioMap_t gpio_t[] = { GPIO7, GPIO5 };
+QueueHandle_t queue_encendido_led, queue_print;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,10 +85,8 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 TickType_t get_diff();
 void clear_diff();
-
-// Prototipo de funcion de la tarea
-void tarea_led( void* taskParmPtr );
-void tarea_tecla( void* taskParmPtr );
+void tarea_led(void* taskParmPtr);
+void tarea_print(void* taskParmPtr);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -104,7 +110,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  keys_Init();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -138,9 +144,12 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  queue_tec_pulsada = xQueueCreate( 1 , sizeof(TickType_t) );
+  queue_encendido_led = xQueueCreate(1, sizeof(Cola_t));
+  queue_print = xQueueCreate(N_QUEUE, sizeof(Cola_t));
+
   // Gestion de errores de colas
-  configASSERT( queue_tec_pulsada != NULL );
+  configASSERT(queue_encendido_led != NULL);
+  configASSERT(queue_print != NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -148,23 +157,32 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  printf( WELCOME_MSG);
   BaseType_t res;
   uint32_t i;
-
   // Crear tarea en freeRTOS
-  for (i = 0 ; i < LED_COUNT ; i++)
-  {
-    res = xTaskCreate(
-    tarea_led,                     // Funcion de la tarea a ejecutar
-    ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
-    configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
-    i,                          // Parametros de tarea
-    tskIDLE_PRIORITY+1,         // Prioridad de la tarea
-    0                           // Puntero a la tarea creada en el sistema
-    );
+  res = xTaskCreate(
+    tarea_led,               // Funcion de la tarea a ejecutar
+    (const char *) "tarea_led_a", // Nombre de la tarea como String amigable para el usuario
+  	configMINIMAL_STACK_SIZE * 2, // Cantidad de stack de la tarea
+  	0,                          // Parametros de tarea
+  	tskIDLE_PRIORITY + 1,         // Prioridad de la tarea
+  	0                         // Puntero a la tarea creada en el sistema
+  );
   // Gestion de errores
-  configASSERT( res == pdPASS );
-  }
+  configASSERT(res == pdPASS);
+  // Creo tarea unica de impresion
+  res = xTaskCreate(
+    tarea_print,             // Funcion de la tarea a ejecutar
+    (const char *) "tarea_print", // Nombre de la tarea como String amigable para el usuario
+    configMINIMAL_STACK_SIZE * 2, // Cantidad de stack de la tarea
+    0,                          // Parametros de tarea
+    tskIDLE_PRIORITY + 1,         // Prioridad de la tarea
+  	0                         // Puntero a la tarea creada en el sistema
+  );
+  // Gestion de errores
+  configASSERT(res == pdPASS);
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -303,34 +321,119 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void tarea_led( void* taskParmPtr )
-{
-	uint32_t index = (uint32_t) taskParmPtr;
-
-    // ---------- CONFIGURACIONES ------------------------------
+void tarea_led(void* taskParmPtr) {
+	// ---------- CONFIGURACIONES ------------------------------
 	TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
 	TickType_t xLastWakeTime = xTaskGetTickCount();
-	TickType_t dif;
-    // ---------- REPETIR POR SIEMPRE --------------------------
-    while( TRUE )
-    {
-    	xQueueReceive( queue_tec_pulsada , &dif,  portMAX_DELAY );			// Esperamos tecla
+//	TickType_t dif = 0;
+	Cola_t datos;
 
-		gpioWrite( leds_t[index], ON );
-		gpioWrite( gpio_t[index] , ON );
-		vTaskDelay( dif );
-		gpioWrite( leds_t[index], OFF );
-		gpioWrite( gpio_t[index] , OFF );
-    }
+	//Se inicializa la estructura de datos
+	datos.evento = blink;
+	datos.index = 2;		//indico el led 2.
+	datos.value = OFF;
+
+	// ---------- REPETIR POR SIEMPRE --------------------------
+	while ( TRUE) {
+		//Si se recibe un dato, se enciende el LEDB (led 1)//
+		if (xQueueReceive(queue_encendido_led, &datos, 0) == pdTRUE) {
+			gpioWrite(LEDB, ON);
+			gpioWrite(GPIO7, ON);
+
+			datos.evento = blink;
+			datos.index = 1;		//indico el led 1.
+			datos.value = ON;
+
+			xQueueSend(queue_print, &datos, portMAX_DELAY);
+
+			vTaskDelay(xPeriodicity / 2);
+
+			gpioWrite(LEDB, OFF);
+			gpioWrite(GPIO7, OFF);
+
+			datos.evento = blink;
+			datos.index = 1;		//indico el led 1.
+			datos.value = OFF;
+
+			xQueueSend(queue_print, &datos, portMAX_DELAY);
+			vTaskDelayUntil(&xLastWakeTime, xPeriodicity);
+		} else {
+			gpioWrite(LED1, ON);
+			gpioWrite(GPIO5, ON);
+
+			datos.evento = blink;
+			datos.index = 2;		//indico el led 1.
+			datos.value = ON;
+
+			xQueueSend(queue_print, &datos, portMAX_DELAY);
+
+			vTaskDelay(xPeriodicity / 2);
+
+			gpioWrite(LED1, OFF);
+			gpioWrite(GPIO5, OFF);
+
+			datos.evento = blink;
+			datos.index = 2;		//indico el led 1.
+			datos.value = OFF;
+
+			xQueueSend(queue_print, &datos, portMAX_DELAY);
+			vTaskDelayUntil(&xLastWakeTime, xPeriodicity);
+			printf("aquiiiiiii");
+		}
+
+	}
+}
+
+void tarea_print(void* taskParmPtr) {
+	// ---------- CONFIGURACIONES ------------------------------
+	TickType_t xPeriodicity = PRINT_RATE;
+	TickType_t xLastWakeTime = xTaskGetTickCount();
+	// ---------- REPETIR POR SIEMPRE --------------------------
+
+	Cola_t datos;
+
+	while ( TRUE) {
+		// | d_tec1 | d_tec2 | d_tec1 | d_tec4 ...
+		xQueueReceive(queue_print, &datos, portMAX_DELAY);// Esperamos dato para imprimir
+
+		// 36   37     38     39
+		// TEC1 | TEC2 | TEC3 | TEC4
+		//   0  |  1   |  2   |  3
+		//   1  |  2   |  3   |  4
+
+		if (datos.evento == tec) {
+			printf("Se presiono TEC%d por %d ms\r\n", datos.index,
+					datos.value * portTICK_RATE_MS);
+		}
+		else if (datos.evento == blink){
+			printf("Estado %d del LED%d\r\n",datos.value, datos.index);
+		}
+	}
 }
 
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
-void vApplicationMallocFailedHook()
-{
-	printf( MALLOC_ERROR );
-	configASSERT( 0 );
+void vApplicationMallocFailedHook() {
+	printf("Malloc Failed Hook!\n");
+	configASSERT(0);
 }
-/*==================[fin del archivo]========================================*/
+
+int __io_putchar(int ch)
+{
+ uint8_t c[1];
+ c[0] = ch & 0x00FF;
+ HAL_UART_Transmit(&huart2, &*c, 1, 10);
+ return ch;
+}
+
+int _write(int file,char *ptr, int len)
+{
+ int DataIdx;
+ for(DataIdx= 0; DataIdx< len; DataIdx++)
+ {
+ __io_putchar(*ptr++);
+ }
+return len;
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */

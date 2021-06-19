@@ -12,9 +12,9 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-#include "semphr.h"
-
 #include "sapi.h"
+
+#include "queue.h"
 
 /*=====[ Definitions of private data types ]===================================*/
 const t_key_config  keys_config[] = { TEC1 };
@@ -33,7 +33,7 @@ static void buttonReleased( uint32_t index );
 
 /*=====[Definitions of public global variables]==============================*/
 t_key_data keys_data[KEY_COUNT];
-extern QueueHandle_t queue_tec_pulsada;
+extern QueueHandle_t queue_encendido_led, queue_print;
 /*=====[prototype of private functions]=================================*/
 void task_tecla( void* taskParmPtr );
 
@@ -78,7 +78,7 @@ void keys_Init( void )
 	  0							// Puntero a la tarea creada en el sistema
 	);
 
-	// Gestión de errores
+	// GestiÃ³n de errores
 	configASSERT( res == pdPASS );
 }
 
@@ -164,14 +164,21 @@ static void buttonPressed( uint32_t index )
 static void buttonReleased( uint32_t index )
 {
 	TickType_t current_tick_count = xTaskGetTickCount();
+	Cola_t datos;
 
 	taskENTER_CRITICAL();
 	keys_data[index].time_up    = current_tick_count;
 	keys_data[index].time_diff  = keys_data[index].time_up - keys_data[index].time_down;
 	taskEXIT_CRITICAL();
 
-	if ( keys_data[index].time_diff  > 0 )
-		xQueueSend( queue_tec_pulsada , &(keys_data[index].time_diff ),  portMAX_DELAY  );
+	if (keys_data[index].time_diff > 0)
+
+		datos.evento= tec;
+		datos.index = index;
+		datos.value = keys_data[index].time_diff;
+
+		xQueueSend( queue_encendido_led , &datos,  portMAX_DELAY  );
+		xQueueSend( queue_print , &datos,  portMAX_DELAY  );
 }
 
 static void keys_ButtonError( uint32_t index )

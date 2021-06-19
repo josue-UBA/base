@@ -111,14 +111,3 @@ int gpioRead(gpioMap_t pin)
     return 1;
   }
 }
-
-void mi_printf(char* texto, char* parametro_1)
-{
-	char buffer[100]="";
-	//snprintf((char *)dataT, m, texto);
-    sprintf(buffer, texto, parametro_1);
-    strcat(buffer,"\r");
-	int m = sizeof(buffer) / sizeof(buffer[0]);
-	HAL_UART_Transmit(&huart2, (uint8_t *)buffer, m, HAL_MAX_DELAY);
-}
-

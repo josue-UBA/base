@@ -12,7 +12,6 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-#include "semphr.h"
 #include "sapi.h"
 
 /* public macros ================================================================= */
@@ -38,9 +37,18 @@ typedef struct
 	TickType_t time_down;		//timestamp of the last High to Low transition of the key
 	TickType_t time_up;		    //timestamp of the last Low to High transition of the key
 	TickType_t time_diff;	    //variables
-
-	SemaphoreHandle_t sem_tec_pulsada; //semaforo
 } t_key_data;
+
+typedef struct
+{
+	uint8_t evento;				//tec o  blink
+	uint8_t index;				//Numero de Led o tecla
+	uint32_t value;				//On o off, o el tiempo de tecla presionada
+} Cola_t;
+
+typedef enum {tec=0,
+	blink
+}evento_t;
 
 /* methods ================================================================= */
 void keys_Init( void );
