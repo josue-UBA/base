@@ -28,7 +28,6 @@ static void keys_event_handler_button_pressed( uint32_t index );
 static void keys_event_handler_button_release( uint32_t index );
 
 /*=====[Definitions of private global variables]=============================*/
-
 const t_key_config  keys_config[] = { TEC1 };
 
 #define KEY_COUNT   sizeof(keys_config)/sizeof(keys_config[0])
@@ -38,6 +37,7 @@ t_key_data keys_data[KEY_COUNT];
 /*=====[Definitions of public global variables]==============================*/
 
 extern QueueHandle_t queue_tec_pulsada;
+
 /*=====[prototype of private functions]=================================*/
 void keys_service_task( void* taskParmPtr );
 
@@ -104,6 +104,12 @@ void keys_init( void )
 }
 
 // keys_ Update State Function
+
+/**
+   @brief Keys SM for polled operation
+
+   @param index
+ */
 void keys_Update( uint32_t index )
 {
 	switch( keys_data[index].state )
@@ -171,7 +177,6 @@ void keys_Update( uint32_t index )
 
 /*=====[Implementations of private functions]================================*/
 
-
 /**
    @brief   Manejador del evento de tecla pulsada
 
@@ -185,7 +190,6 @@ static void keys_event_handler_button_pressed( uint32_t index )
 	keys_data[index].time_down = current_tick_count;
 	taskEXIT_CRITICAL();
 }
-
 
 /**
    @brief   Manejador del evento de tecla liberada
@@ -207,6 +211,7 @@ static void keys_event_handler_button_release( uint32_t index )
 	}
 
 }
+
 /**
    @brief Restarts the button SM
 
@@ -229,7 +234,6 @@ static void keys_reset( uint32_t index )
 void keys_service_task( void* taskParmPtr )
 {
 	uint32_t i;
-
 	while( TRUE )
 	{
 		for ( i = 0 ; i < KEY_COUNT ; i++ )
