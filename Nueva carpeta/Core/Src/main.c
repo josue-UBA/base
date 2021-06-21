@@ -29,7 +29,6 @@
 #include "keys.h"
 
 #include <stdio.h>
-#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,9 +61,6 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
-TickType_t get_diff();
-void clear_diff();
-
 // Prototipo de funcion de la tarea
 void tarea_led( void* taskParmPtr );
 void tarea_tecla( void* taskParmPtr );
@@ -133,23 +129,21 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   BaseType_t res;
-      uint32_t i;
-
-      // Crear tarea en freeRTOS
-      for ( i = 0 ; i < LED_COUNT ; i++ )
-      {
-          res = xTaskCreate(
-                    tarea_led,                     // Funcion de la tarea a ejecutar
-                    ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
-                    configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
-                    i,                          // Parametros de tarea
-                    tskIDLE_PRIORITY+1,         // Prioridad de la tarea
-                    0                           // Puntero a la tarea creada en el sistema
-                );
-
-          // Gestion de errores
-          configASSERT( res == pdPASS );
-      }
+  uint32_t i;
+  // Crear tarea en freeRTOS
+  for ( i = 0 ; i < LED_COUNT ; i++ )
+  {
+    res = xTaskCreate(
+    tarea_led,                     // Funcion de la tarea a ejecutar
+    ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
+    configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
+    i,                          // Parametros de tarea
+    tskIDLE_PRIORITY+1,         // Prioridad de la tarea
+    0                           // Puntero a la tarea creada en el sistema
+  );
+  // Gestion de errores
+  configASSERT( res == pdPASS );
+  }
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -319,16 +313,33 @@ void tarea_led( void* taskParmPtr )
         {
             vTaskDelay( LED_RATE );
         }
+        printf("index: %d\tdif: %d \n\r",(int)index,(int)dif);
     }
 }
 
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
 void vApplicationMallocFailedHook()
 {
-    printf( "Malloc Failed Hook!\n" );
-    configASSERT( 0 );
+  printf( "Malloc Failed Hook!\n" );
+  configASSERT( 0 );
+}
+int __io_putchar(int ch)
+{
+  uint8_t c[1];
+  c[0] = ch & 0x00FF;
+  HAL_UART_Transmit(&huart2, &*c, 1, 10);
+  return ch;
 }
 
+int _write(int file,char *ptr, int len)
+{
+  int DataIdx;
+  for(DataIdx= 0; DataIdx< len; DataIdx++)
+  {
+    __io_putchar(*ptr++);
+  }
+  return len;
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
