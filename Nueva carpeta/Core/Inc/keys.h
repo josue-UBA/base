@@ -43,8 +43,8 @@ typedef struct
 } t_key_data;
 
 /* methods ================================================================= */
-void keys_Init( void );
-TickType_t get_diff( uint32_t index );
-void clear_diff( uint32_t index );
+void keys_init( void );
+TickType_t keys_get_diff( uint32_t index );
+void keys_clear_diff( uint32_t index );
 
 #endif /* PDM_ANTIRREBOTE_MEF_INC_DEBOUNCE_H_ */

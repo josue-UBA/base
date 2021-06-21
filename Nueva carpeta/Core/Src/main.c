@@ -40,19 +40,19 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define RATE 1000
+#define LED_RATE pdMS_TO_TICKS(RATE)
+
 #define WELCOME_MSG  "Ejercicio D_6.\r\n"
 #define USED_UART UART_USB
 #define UART_RATE 115200
 #define MALLOC_ERROR "Malloc Failed Hook!\n"
 #define MSG_ERROR_SEM "Error al crear los semaforos.\r\n"
 #define LED_ERROR LEDR
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 #define LED_COUNT   sizeof(leds_t)/sizeof(leds_t[0])
-#define LED_RATE pdMS_TO_TICKS(RATE)
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -64,8 +64,6 @@ UART_HandleTypeDef huart2;
 gpioMap_t leds_t[] = {LEDB,LED1,LED2,LED3};
 gpioMap_t gpio_t[] = {GPIO7,GPIO5,GPIO3,GPIO1};
 extern t_key_config keys_config[];
-
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -74,11 +72,10 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
-TickType_t get_diff();
-void clear_diff();
+TickType_t keys_get_diff();
+void keys_clear_diff();
 void tarea_led( void* taskParmPtr );
 void tarea_tecla( void* taskParmPtr );
-void gpio_init( void );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -93,7 +90,7 @@ void gpio_init( void );
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  printf( WELCOME_MSG );
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -102,7 +99,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  keys_Init();
+  keys_init();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -143,16 +140,16 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  // Crear tarea en freeRTOS
   BaseType_t res;
   uint32_t i;
+  // Crear tarea en freeRTOS
   for ( i = 0 ; i < LED_COUNT ; i++ )
   {
     res = xTaskCreate(
       tarea_led,                     // Funcion de la tarea a ejecutar
       ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
       configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
-	  (void * const)i,                          // Parametros de tarea
+      (void *)i,                          // Parametros de tarea
       tskIDLE_PRIORITY+1,         // Prioridad de la tarea
       0                           // Puntero a la tarea creada en el sistema
     );
@@ -162,7 +159,6 @@ int main(void)
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-  vTaskStartScheduler();
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
 
@@ -171,6 +167,7 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  vTaskStartScheduler();
   while (1)
   {
     /* USER CODE END WHILE */
@@ -336,6 +333,23 @@ void vApplicationMallocFailedHook()
     configASSERT( 0 );
 }
 /*==================[fin del archivo]========================================*/
+int __io_putchar(int ch)
+{
+  uint8_t c[1];
+  c[0] = ch & 0x00FF;
+  HAL_UART_Transmit(&huart2, &*c, 1, 10);
+  return ch;
+}
+
+int _write(int file,char *ptr, int len)
+{
+  int DataIdx;
+  for(DataIdx= 0; DataIdx< len; DataIdx++)
+  {
+    __io_putchar(*ptr++);
+  }
+  return len;
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
