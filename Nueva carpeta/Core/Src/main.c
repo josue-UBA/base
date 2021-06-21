@@ -299,38 +299,36 @@ static void MX_GPIO_Init(void)
 // Implementacion de funcion de la tarea
 void tarea_led( void* taskParmPtr )
 {
-    uint32_t index = ( uint32_t ) taskParmPtr;
+  uint32_t index = ( uint32_t ) taskParmPtr;
 
-    // ---------- CONFIGURACIONES ------------------------------
-    TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
-    TickType_t xLastWakeTime = xTaskGetTickCount();
-    TickType_t dif;
-    uint8_t contador = 0;
-    // ---------- REPETIR POR SIEMPRE --------------------------
-    while( TRUE )
-    {
-        contador = ( uint8_t )uxSemaphoreGetCount( keys_config[index].sem_btn );
-        printf( "Quedan %d semaforos\r\n",contador );
+  // ---------- CONFIGURACIONES ------------------------------
+  TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
+  TickType_t xLastWakeTime = xTaskGetTickCount();
+  TickType_t dif;
+  uint8_t contador = 0;
+  // ---------- REPETIR POR SIEMPRE --------------------------
+  while( TRUE )
+  {
+    contador = ( uint8_t )uxSemaphoreGetCount( keys_config[index].sem_btn );
+    printf( "Quedan %d semaforos\r\n",contador );
+    xSemaphoreTake( keys_config[index].sem_btn, portMAX_DELAY );			// Esperamos tecla
+    xLastWakeTime = xTaskGetTickCount();
 
-        xSemaphoreTake( keys_config[index].sem_btn, portMAX_DELAY );			// Esperamos tecla
+    gpioWrite( leds_t[index], ON );
+    gpioWrite( gpio_t[index], ON );
+    vTaskDelay( xPeriodicity / 2 );
+    gpioWrite( leds_t[index], OFF );
+    gpioWrite( gpio_t[index], OFF );
 
-        xLastWakeTime = xTaskGetTickCount();
-
-        gpioWrite( leds_t[index], ON );
-        gpioWrite( gpio_t[index], ON );
-        vTaskDelay( xPeriodicity / 2 );
-        gpioWrite( leds_t[index], OFF );
-        gpioWrite( gpio_t[index], OFF );
-
-        vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
-    }
+    vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+  }
 }
 
 /* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
 void vApplicationMallocFailedHook()
 {
-    printf( MALLOC_ERROR );
-    configASSERT( 0 );
+  printf( MALLOC_ERROR );
+  configASSERT( 0 );
 }
 /*==================[fin del archivo]========================================*/
 int __io_putchar(int ch)
