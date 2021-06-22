@@ -64,6 +64,7 @@ UART_HandleTypeDef huart2;
 gpioMap_t leds_t[] = {LEDB,LED1,LED2,LED3};
 gpioMap_t gpio_t[] = {GPIO7,GPIO5,GPIO3,GPIO1};
 extern t_key_config keys_config[];
+QueueHandle_t xQueue1;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,7 +76,7 @@ static void MX_USART2_UART_Init(void);
 TickType_t keys_get_diff();
 void keys_clear_diff();
 void tarea_led( void* taskParmPtr );
-void tarea_tecla( void* taskParmPtr );
+void tarea_principal( void* taskParmPtr );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -133,6 +134,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  xQueue1 = xQueueCreate( 10, sizeof( int ) );
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -142,7 +144,6 @@ int main(void)
   /* add threads, ... */
   BaseType_t res;
   uint32_t i;
-  // Crear tarea en freeRTOS
   for ( i = 0 ; i < LED_COUNT ; i++ )
   {
     res = xTaskCreate(
@@ -156,6 +157,16 @@ int main(void)
     // Gestion de errores
     configASSERT( res == pdPASS );
   }
+  res = xTaskCreate(
+    tarea_principal,                     // Funcion de la tarea a ejecutar
+    ( const char * )"tarea_principal",   // Nombre de la tarea como String amigable para el usuario
+    configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
+    (void *)i,                          // Parametros de tarea
+    tskIDLE_PRIORITY+1,         // Prioridad de la tarea
+    0                           // Puntero a la tarea creada en el sistema
+  );
+  // Gestion de errores
+  configASSERT( res == pdPASS );
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -294,33 +305,63 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/* ******************************************************************************** */
+void tarea_principal( void* taskParmPtr )
+{
+  int sumatoria=0;
+  int elemento_de_cola=0;
+  for(;;){
+    /* COMIENZA PRIMERA PARTE */
+    for(int i=0;i<LED_COUNT;i++){
+      if(keys_get_diff(i)!=-1){
+        //xSemaphoreGive(keys_config[i].sem_btn);
+      }
+    }
+    /* FIN */
+    /* COMIENZA SEGUNDA PARTE */
+    taskENTER_CRITICAL();
+    //printf("tamaño de cola: %d\tsumatoria: %d\n\r",(int)uxQueueSpacesAvailable(xQueue1),sumatoria);
+    taskEXIT_CRITICAL();
+    while((int)uxQueueSpacesAvailable(xQueue1)<10){
+      xQueueReceive(xQueue1,&elemento_de_cola,0);
+      sumatoria = sumatoria + elemento_de_cola;
+      taskENTER_CRITICAL();
+      printf("sumatoria: %d\n\r",sumatoria);
+      taskEXIT_CRITICAL();
+    }
+    /* FIN */
+  }
+}
+/* ******************************************************************************** */
+
 /*==================[definiciones de funciones externas]=====================*/
 
 // Implementacion de funcion de la tarea
 void tarea_led( void* taskParmPtr )
 {
   uint32_t index = ( uint32_t ) taskParmPtr;
-
-  // ---------- CONFIGURACIONES ------------------------------
-  TickType_t xPeriodicity = LED_RATE; // Tarea periodica cada 1000 ms
-  TickType_t xLastWakeTime = xTaskGetTickCount();
-  TickType_t dif;
-  uint8_t contador = 0;
-  // ---------- REPETIR POR SIEMPRE --------------------------
-  while( TRUE )
-  {
-    contador = ( uint8_t )uxSemaphoreGetCount( keys_config[index].sem_btn );
-    printf( "Quedan %d semaforos\r\n",contador );
-    xSemaphoreTake( keys_config[index].sem_btn, portMAX_DELAY );			// Esperamos tecla
-    xLastWakeTime = xTaskGetTickCount();
-
-    gpioWrite( leds_t[index], ON );
-    gpioWrite( gpio_t[index], ON );
-    vTaskDelay( xPeriodicity / 2 );
-    gpioWrite( leds_t[index], OFF );
-    gpioWrite( gpio_t[index], OFF );
-
-    vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+  int xLastWakeTime;
+  int tiempo_random_abajo;
+  int tiempo_random_arriba;
+  int N = 2000; // numero aleatorio maximo
+  for(;;){
+    gpioWrite(leds_t[index], ON);
+    xLastWakeTime = (int)xTaskGetTickCount();
+    tiempo_random_arriba = 2000;//rand() % (N+1); // tiene que ser random
+    xSemaphoreTake( keys_config[index].sem_btn, 0 );
+    if(xSemaphoreTake(keys_config[index].sem_btn, tiempo_random_arriba) == TRUE){
+      xLastWakeTime = (int)xTaskGetTickCount() - xLastWakeTime;
+      xQueueSend(xQueue1, &xLastWakeTime, 0);
+      taskENTER_CRITICAL();
+      printf("se envia a cola el valor %d\n\r",xLastWakeTime);
+      taskEXIT_CRITICAL();
+    }
+    else{
+    }
+    gpioWrite(leds_t[index], OFF);
+    tiempo_random_abajo  = 2000;//rand() % (N+1);// tiene que ser random
+    vTaskDelay(tiempo_random_abajo);
   }
 }
 

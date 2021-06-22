@@ -18,7 +18,6 @@ const gpioMap_t btn_t[] = {TEC1,TEC2,TEC3,TEC4};
 /*=====[Definition macros of private constants]==============================*/
 #define DEBOUNCE_TIME   40
 #define DEBOUNCE_TIME_TICKS pdMS_TO_TICKS(DEBOUNCE_TIME)
-#define N_SEM 						 3
 /*=====[Prototypes (declarations) of private functions]======================*/
 
 static void keys_reset( uint32_t index );
@@ -65,7 +64,7 @@ void keys_init( void )
         keys_data[i].time_diff      = KEYS_INVALID_TIME;
 
         keys_config[i].btn          = btn_t[i];
-        keys_config[i].sem_btn = xSemaphoreCreateCounting( N_SEM, 0 );
+        keys_config[i].sem_btn = xSemaphoreCreateBinary();
 
         // Gestion de errores de semaforos
         configASSERT( keys_config[i].sem_btn !=  NULL  );
@@ -176,6 +175,9 @@ static void keys_event_handler_button_release( uint32_t index )
     if ( keys_data[index].time_diff  > 0 )
     {
         xSemaphoreGive( keys_config[index].sem_btn );
+        taskENTER_CRITICAL();
+        printf("libera semaforo %d\n\r",index);
+        taskEXIT_CRITICAL();
     }
 }
 
