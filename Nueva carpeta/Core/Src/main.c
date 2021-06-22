@@ -330,10 +330,10 @@ void tarea_principal( void* taskParmPtr )
       printf("sumatoria: %d\n\r",sumatoria);
       taskEXIT_CRITICAL();
     }
-    if(tiempo + 5000 < (int)xTaskGetTickCount())
+    if(FALSE)//tiempo + 5000 < (int)xTaskGetTickCount())
     {
       vTaskDelete(handle_keys_service_task);
-      for(int i=0;i<4;i++)
+      for(int i=0;i<LED_COUNT;i++)
       {
         vTaskDelete(handle_tarea_topo[i]);
       }
@@ -358,27 +358,47 @@ void tarea_topo( void* taskParmPtr )
   printf("inicia: tarea_topo - %d\n\r",(int)taskParmPtr);
   taskEXIT_CRITICAL();
   uint32_t index = ( uint32_t ) taskParmPtr;
-  int xLastWakeTime;
-  int tiempo_random_abajo;
-  int tiempo_random_arriba;
+  int xLastWakeTime = 0;
+  int tiempo_random_abajo = 0;
+  int tiempo_random_arriba = 0;
+  int enviar_a_cola = 0;
   int N = 2000; // numero aleatorio maximo
   for(;;){
     gpioWrite(leds_t[index], ON);
-    xLastWakeTime = (int)xTaskGetTickCount();
     tiempo_random_arriba = 2000;//rand() % (N+1); // tiene que ser random
-    xSemaphoreTake( keys_config[index].sem_btn, 0 );
-    if(xSemaphoreTake(keys_config[index].sem_btn, tiempo_random_arriba) == TRUE){
-      xLastWakeTime = (int)xTaskGetTickCount() - xLastWakeTime;
-      xQueueSend(xQueue1, &xLastWakeTime, 0);
+    xLastWakeTime = (int)xTaskGetTickCount();
+    if(xSemaphoreTake(keys_config[index].sem_btn, tiempo_random_arriba) == TRUE)
+    {
+      enviar_a_cola = (int)xTaskGetTickCount() - xLastWakeTime;
+      xQueueSend(xQueue1, &enviar_a_cola, 0);
       taskENTER_CRITICAL();
-      //printf("se envia a cola el valor %d\n\r",xLastWakeTime);
+      printf("premio: %d\n\r",enviar_a_cola);
       taskEXIT_CRITICAL();
     }
-    else{
+    else
+    {
+      enviar_a_cola = -10;
+      xQueueSend(xQueue1, &enviar_a_cola, 0);
+      taskENTER_CRITICAL();
+      printf("castigo: %d\n\r",enviar_a_cola);
+      taskEXIT_CRITICAL();
     }
     gpioWrite(leds_t[index], OFF);
     tiempo_random_abajo  = 2000;//rand() % (N+1);// tiene que ser random
-    vTaskDelay(tiempo_random_abajo);
+    xLastWakeTime = (int)xTaskGetTickCount();
+    if(xSemaphoreTake(keys_config[index].sem_btn, tiempo_random_arriba) == TRUE)
+    {
+      enviar_a_cola = -20;
+      xQueueSend(xQueue1, &enviar_a_cola, 0);
+      vTaskDelayUntil(&xLastWakeTime, tiempo_random_abajo);
+      taskENTER_CRITICAL();
+      printf("castigo: %d\n\r",enviar_a_cola);
+      taskEXIT_CRITICAL();
+    }
+    else
+    {
+      //nada
+    }
   }
 }
 
