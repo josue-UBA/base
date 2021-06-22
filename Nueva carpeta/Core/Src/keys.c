@@ -29,6 +29,7 @@ static void keys_event_handler_button_release( uint32_t index );
 /*=====[Definitions of public global variables]==============================*/
 t_key_data keys_data[KEY_COUNT];
 t_key_config  keys_config[KEY_COUNT];
+extern TaskHandle_t handle_keys_service_task;
 /*=====[prototype of private functions]=================================*/
 void keys_service_task( void* taskParmPtr );
 
@@ -77,7 +78,7 @@ void keys_init( void )
               configMINIMAL_STACK_SIZE*2,	// Cantidad de stack de la tarea
               0,							// Parametros de tarea
               tskIDLE_PRIORITY+1,			// Prioridad de la tarea
-              0							// Puntero a la tarea creada en el sistema
+			  &handle_keys_service_task				// Puntero a la tarea creada en el sistema
           );
 
     // Gestión de errores
@@ -176,7 +177,7 @@ static void keys_event_handler_button_release( uint32_t index )
     {
         xSemaphoreGive( keys_config[index].sem_btn );
         taskENTER_CRITICAL();
-        printf("libera semaforo %d\n\r",index);
+        printf("libera semaforo %d\n\r",(int)index);
         taskEXIT_CRITICAL();
     }
 }
@@ -191,13 +192,16 @@ static void keys_reset( uint32_t index )
 /*=====[Implementations of private functions]=================================*/
 void keys_service_task( void* taskParmPtr )
 {
-    uint32_t i;
-    while( TRUE )
+  taskENTER_CRITICAL();
+  printf("inicia: keys_service_task - %d\n\r",(int)taskParmPtr);
+  taskEXIT_CRITICAL();
+  uint32_t i;
+  while( TRUE )
+  {
+    for ( i = 0 ; i < KEY_COUNT ; i++ )
     {
-        for ( i = 0 ; i < KEY_COUNT ; i++ )
-        {
-            keys_Update( i );
-        }
-        vTaskDelay( DEBOUNCE_TIME_TICKS );
+      keys_Update( i );
     }
+    vTaskDelay( DEBOUNCE_TIME_TICKS );
+  }
 }

@@ -27,6 +27,7 @@
 #include "FreeRTOSConfig.h"
 #include "keys.h"
 #include "sapi.h"
+#include "task.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -65,6 +66,8 @@ gpioMap_t leds_t[] = {LEDB,LED1,LED2,LED3};
 gpioMap_t gpio_t[] = {GPIO7,GPIO5,GPIO3,GPIO1};
 extern t_key_config keys_config[];
 QueueHandle_t xQueue1;
+TaskHandle_t handle_keys_service_task;
+TaskHandle_t handle_tarea_topo[4];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,7 +78,7 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 TickType_t keys_get_diff();
 void keys_clear_diff();
-void tarea_led( void* taskParmPtr );
+void tarea_topo( void* taskParmPtr );
 void tarea_principal( void* taskParmPtr );
 /* USER CODE END PFP */
 
@@ -147,12 +150,12 @@ int main(void)
   for ( i = 0 ; i < LED_COUNT ; i++ )
   {
     res = xTaskCreate(
-      tarea_led,                     // Funcion de la tarea a ejecutar
-      ( const char * )"tarea_led",   // Nombre de la tarea como String amigable para el usuario
+      tarea_topo,                     // Funcion de la tarea a ejecutar
+      ( const char * )"tarea_topo",   // Nombre de la tarea como String amigable para el usuario
       configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
       (void *)i,                          // Parametros de tarea
       tskIDLE_PRIORITY+1,         // Prioridad de la tarea
-      0                           // Puntero a la tarea creada en el sistema
+	  &handle_tarea_topo[i]           // Puntero a la tarea creada en el sistema
     );
     // Gestion de errores
     configASSERT( res == pdPASS );
@@ -309,28 +312,39 @@ static void MX_GPIO_Init(void)
 /* ******************************************************************************** */
 void tarea_principal( void* taskParmPtr )
 {
+  taskENTER_CRITICAL();
+  printf("inicia: tarea_principal - %d\n\r",(int)taskParmPtr);
+  taskEXIT_CRITICAL();
   int sumatoria=0;
   int elemento_de_cola=0;
+  int tiempo = (int)xTaskGetTickCount();
   for(;;){
-    /* COMIENZA PRIMERA PARTE */
-    for(int i=0;i<LED_COUNT;i++){
-      if(keys_get_diff(i)!=-1){
-        //xSemaphoreGive(keys_config[i].sem_btn);
-      }
-    }
-    /* FIN */
-    /* COMIENZA SEGUNDA PARTE */
     taskENTER_CRITICAL();
     //printf("tamaño de cola: %d\tsumatoria: %d\n\r",(int)uxQueueSpacesAvailable(xQueue1),sumatoria);
     taskEXIT_CRITICAL();
-    while((int)uxQueueSpacesAvailable(xQueue1)<10){
+    while((int)uxQueueSpacesAvailable(xQueue1)<10)
+    {
       xQueueReceive(xQueue1,&elemento_de_cola,0);
       sumatoria = sumatoria + elemento_de_cola;
       taskENTER_CRITICAL();
       printf("sumatoria: %d\n\r",sumatoria);
       taskEXIT_CRITICAL();
     }
-    /* FIN */
+    if(tiempo + 5000 < (int)xTaskGetTickCount())
+    {
+      vTaskDelete(handle_keys_service_task);
+      for(int i=0;i<4;i++)
+      {
+        vTaskDelete(handle_tarea_topo[i]);
+      }
+      for(;;)
+      {
+        taskENTER_CRITICAL();
+        printf("El programa termino: %d\n\r",(int)xTaskGetTickCount());
+        taskEXIT_CRITICAL();
+        vTaskDelay(1000);
+      }
+    }
   }
 }
 /* ******************************************************************************** */
@@ -338,8 +352,11 @@ void tarea_principal( void* taskParmPtr )
 /*==================[definiciones de funciones externas]=====================*/
 
 // Implementacion de funcion de la tarea
-void tarea_led( void* taskParmPtr )
+void tarea_topo( void* taskParmPtr )
 {
+  taskENTER_CRITICAL();
+  printf("inicia: tarea_topo - %d\n\r",(int)taskParmPtr);
+  taskEXIT_CRITICAL();
   uint32_t index = ( uint32_t ) taskParmPtr;
   int xLastWakeTime;
   int tiempo_random_abajo;
@@ -354,7 +371,7 @@ void tarea_led( void* taskParmPtr )
       xLastWakeTime = (int)xTaskGetTickCount() - xLastWakeTime;
       xQueueSend(xQueue1, &xLastWakeTime, 0);
       taskENTER_CRITICAL();
-      printf("se envia a cola el valor %d\n\r",xLastWakeTime);
+      //printf("se envia a cola el valor %d\n\r",xLastWakeTime);
       taskEXIT_CRITICAL();
     }
     else{
