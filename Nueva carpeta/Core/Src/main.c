@@ -29,6 +29,7 @@
 #include "sapi.h"
 #include "task.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 /* USER CODE END Includes */
@@ -49,6 +50,7 @@
 #define MALLOC_ERROR "Malloc Failed Hook!\n"
 #define MSG_ERROR_SEM "Error al crear los semaforos.\r\n"
 #define LED_ERROR LEDR
+#define DURACION_DEL_PROGRAMA 9000000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -145,26 +147,14 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  BaseType_t res;
-  uint32_t i;
-  for ( i = 0 ; i < LED_COUNT ; i++ )
-  {
-    res = xTaskCreate(
-      tarea_topo,                     // Funcion de la tarea a ejecutar
-      ( const char * )"tarea_topo",   // Nombre de la tarea como String amigable para el usuario
-      configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
-      (void *)i,                          // Parametros de tarea
-      tskIDLE_PRIORITY+1,         // Prioridad de la tarea
-	  &handle_tarea_topo[i]           // Puntero a la tarea creada en el sistema
-    );
-    // Gestion de errores
-    configASSERT( res == pdPASS );
-  }
-  res = xTaskCreate(
+  taskENTER_CRITICAL();
+  printf("- se crea tarea principal \n\r");
+  taskEXIT_CRITICAL();
+  BaseType_t res = xTaskCreate(
     tarea_principal,                     // Funcion de la tarea a ejecutar
     ( const char * )"tarea_principal",   // Nombre de la tarea como String amigable para el usuario
     configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
-    (void *)i,                          // Parametros de tarea
+    (void *)0,                          // Parametros de tarea
     tskIDLE_PRIORITY+1,         // Prioridad de la tarea
     0                           // Puntero a la tarea creada en el sistema
   );
@@ -312,8 +302,40 @@ static void MX_GPIO_Init(void)
 /* ******************************************************************************** */
 void tarea_principal( void* taskParmPtr )
 {
+  int tiempo_maximo=50;
+  int si_no = 0;
+  while(si_no == 0){
+    int i=0;
+    for(;i<LED_COUNT;i++){
+      if(tiempo_maximo<(int)keys_get_diff(i)){
+		si_no=1;
+        taskENTER_CRITICAL();
+        printf("EL JUEGO COMIENZA: %d\n\r",(int)keys_get_diff(i));
+        taskEXIT_CRITICAL();
+      }
+    }
+  }
+	//-----------------------------
+  uint32_t i;
+  for ( i = 0 ; i < LED_COUNT ; i++ )
+  {
+    taskENTER_CRITICAL();
+    printf("- se crea tarea topo i\n\r");
+    taskEXIT_CRITICAL();
+    BaseType_t res = xTaskCreate(
+      tarea_topo,                     // Funcion de la tarea a ejecutar
+      ( const char * )"tarea_topo",   // Nombre de la tarea como String amigable para el usuario
+      configMINIMAL_STACK_SIZE*2, // Cantidad de stack de la tarea
+      (void *)i,                          // Parametros de tarea
+      tskIDLE_PRIORITY+1,         // Prioridad de la tarea
+      &handle_tarea_topo[i]           // Puntero a la tarea creada en el sistema
+    );
+    // Gestion de errores
+    configASSERT( res == pdPASS );
+  }
+
   taskENTER_CRITICAL();
-  printf("inicia: tarea_principal - %d\n\r",(int)taskParmPtr);
+  printf("-- inicia: tarea_principal - %d\n\r",(int)taskParmPtr);
   taskEXIT_CRITICAL();
   int sumatoria=0;
   int elemento_de_cola=0;
@@ -327,10 +349,10 @@ void tarea_principal( void* taskParmPtr )
       xQueueReceive(xQueue1,&elemento_de_cola,0);
       sumatoria = sumatoria + elemento_de_cola;
       taskENTER_CRITICAL();
-      printf("sumatoria: %d\n\r",sumatoria);
+      //printf("--- sumatoria: %d\n\r",sumatoria);
       taskEXIT_CRITICAL();
     }
-    if(FALSE)//tiempo + 5000 < (int)xTaskGetTickCount())
+    if(tiempo + DURACION_DEL_PROGRAMA < (int)xTaskGetTickCount())
     {
       vTaskDelete(handle_keys_service_task);
       for(int i=0;i<LED_COUNT;i++)
@@ -340,7 +362,7 @@ void tarea_principal( void* taskParmPtr )
       for(;;)
       {
         taskENTER_CRITICAL();
-        printf("El programa termino: %d\n\r",(int)xTaskGetTickCount());
+        printf("EL JUEGO TERMINO: %d\n\r",(int)xTaskGetTickCount());
         taskEXIT_CRITICAL();
         vTaskDelay(1000);
       }
@@ -355,24 +377,24 @@ void tarea_principal( void* taskParmPtr )
 void tarea_topo( void* taskParmPtr )
 {
   taskENTER_CRITICAL();
-  printf("inicia: tarea_topo - %d\n\r",(int)taskParmPtr);
+  printf("-- inicia: tarea_topo - %d\n\r",(int)taskParmPtr);
   taskEXIT_CRITICAL();
   uint32_t index = ( uint32_t ) taskParmPtr;
   int xLastWakeTime = 0;
-  int tiempo_random_abajo = 0;
-  int tiempo_random_arriba = 0;
+  int tiempo_random_arriba = 2000;
+  int tiempo_random_abajo = 2000;
   int enviar_a_cola = 0;
   int N = 2000; // numero aleatorio maximo
   for(;;){
     gpioWrite(leds_t[index], ON);
-    tiempo_random_arriba = 2000;//rand() % (N+1); // tiene que ser random
+    tiempo_random_arriba = rand() % (N+1); // tiene que ser random
     xLastWakeTime = (int)xTaskGetTickCount();
     if(xSemaphoreTake(keys_config[index].sem_btn, tiempo_random_arriba) == TRUE)
     {
-      enviar_a_cola = (int)xTaskGetTickCount() - xLastWakeTime;
+      enviar_a_cola = tiempo_random_arriba + xLastWakeTime - (int)xTaskGetTickCount();
       xQueueSend(xQueue1, &enviar_a_cola, 0);
       taskENTER_CRITICAL();
-      printf("premio: %d\n\r",enviar_a_cola);
+      printf("--- premio: %d\n\r",enviar_a_cola);
       taskEXIT_CRITICAL();
     }
     else
@@ -380,19 +402,19 @@ void tarea_topo( void* taskParmPtr )
       enviar_a_cola = -10;
       xQueueSend(xQueue1, &enviar_a_cola, 0);
       taskENTER_CRITICAL();
-      printf("castigo: %d\n\r",enviar_a_cola);
+      //printf("--- castigo: %d\n\r",enviar_a_cola);
       taskEXIT_CRITICAL();
     }
     gpioWrite(leds_t[index], OFF);
-    tiempo_random_abajo  = 2000;//rand() % (N+1);// tiene que ser random
+    //tiempo_random_abajo  = rand() % (N+1);// tiene que ser random
     xLastWakeTime = (int)xTaskGetTickCount();
-    if(xSemaphoreTake(keys_config[index].sem_btn, tiempo_random_arriba) == TRUE)
+    if(xSemaphoreTake(keys_config[index].sem_btn, tiempo_random_abajo) == TRUE)
     {
       enviar_a_cola = -20;
       xQueueSend(xQueue1, &enviar_a_cola, 0);
       vTaskDelayUntil(&xLastWakeTime, tiempo_random_abajo);
       taskENTER_CRITICAL();
-      printf("castigo: %d\n\r",enviar_a_cola);
+      //printf("--- castigo: %d\n\r",enviar_a_cola);
       taskEXIT_CRITICAL();
     }
     else

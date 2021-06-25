@@ -72,6 +72,9 @@ void keys_init( void )
     }
 
     // Crear tareas en freeRTOS
+    taskENTER_CRITICAL();
+    printf("- se crea tarea key \n\r");
+    taskEXIT_CRITICAL();
     res = xTaskCreate (
               keys_service_task,					// Funcion de la tarea a ejecutar
               ( const char * )"keys_service_task",	// Nombre de la tarea como String amigable para el usuario
@@ -177,7 +180,7 @@ static void keys_event_handler_button_release( uint32_t index )
     {
         xSemaphoreGive( keys_config[index].sem_btn );
         taskENTER_CRITICAL();
-        printf("libera semaforo %d\n\r",(int)index);
+        printf("--- libera semaforo %d\n\r",(int)index);
         taskEXIT_CRITICAL();
     }
 }
@@ -193,7 +196,7 @@ static void keys_reset( uint32_t index )
 void keys_service_task( void* taskParmPtr )
 {
   taskENTER_CRITICAL();
-  printf("inicia: keys_service_task - %d\n\r",(int)taskParmPtr);
+  printf("-- inicia: keys_service_task - %d\n\r",(int)taskParmPtr);
   taskEXIT_CRITICAL();
   uint32_t i;
   while( TRUE )
