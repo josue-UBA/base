@@ -22,23 +22,7 @@ void whackamole_service_logic(void *taskParmPtr) {
 		}
 	}
 	//-----------------------------
-	uint32_t i;
-	xQueue1 = xQueueCreate(10, sizeof(int));
-	for (i = 0; i < LED_COUNT; i++) {
-		taskENTER_CRITICAL();
-		printf("- se crea tarea topo i\n\r");
-		taskEXIT_CRITICAL();
-		BaseType_t res = xTaskCreate(mole_service_logic, // Funcion de la tarea a ejecutar
-				(const char*) "mole_service_logic", // Nombre de la tarea como String amigable para el usuario
-				configMINIMAL_STACK_SIZE * 2, // Cantidad de stack de la tarea
-				(void*) i,                          // Parametros de tarea
-				tskIDLE_PRIORITY + 1,         // Prioridad de la tarea
-				&handle_tarea_topo[i] // Puntero a la tarea creada en el sistema
-				);
-		// Gestion de errores
-		configASSERT(res == pdPASS);
-	}
-
+	whackamole_init();
 	taskENTER_CRITICAL();
 	printf("-- inicia: tarea_principal - %d\n\r", (int) taskParmPtr);
 	taskEXIT_CRITICAL();
@@ -119,5 +103,27 @@ void mole_service_logic(void *taskParmPtr) {
 			//nada
 		}
 	}
+}
+
+
+void whackamole_init(){
+
+	uint32_t i;
+	xQueue1 = xQueueCreate(10, sizeof(int));
+	for (i = 0; i < LED_COUNT; i++) {
+		taskENTER_CRITICAL();
+		printf("- se crea tarea topo i\n\r");
+		taskEXIT_CRITICAL();
+		BaseType_t res = xTaskCreate(mole_service_logic, // Funcion de la tarea a ejecutar
+				(const char*) "mole_service_logic", // Nombre de la tarea como String amigable para el usuario
+				configMINIMAL_STACK_SIZE * 2, // Cantidad de stack de la tarea
+				(void*) i,                          // Parametros de tarea
+				tskIDLE_PRIORITY + 1,         // Prioridad de la tarea
+				&handle_tarea_topo[i] // Puntero a la tarea creada en el sistema
+				);
+		// Gestion de errores
+		configASSERT(res == pdPASS);
+	}
+
 }
 
