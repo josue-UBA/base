@@ -30,7 +30,6 @@
 #include "task.h"
 #include "whackamole.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 /* USER CODE END Includes */

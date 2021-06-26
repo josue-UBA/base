@@ -71,7 +71,7 @@ void mole_service_logic(void *taskParmPtr) {
 	int N = 2000; // numero aleatorio maximo
 	for (;;) {
 		gpioWrite(leds_t[index], ON);
-		tiempo_random_arriba = rand() % (N + 1); // tiene que ser random
+		tiempo_random_arriba = random( 1000,6000 );//rand() % (N + 1); // tiene que ser random
 		xLastWakeTime = (int) xTaskGetTickCount();
 		if (xSemaphoreTake(keys_config[index].sem_btn,
 				tiempo_random_arriba) == TRUE) {
