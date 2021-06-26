@@ -12,7 +12,7 @@
 #include "sapi.h"
 
 /*=====[ Definitions of private data types ]===================================*/
-const gpioMap_t btn_t[] = {TEC1,TEC2,TEC3,TEC4};
+const gpioMap_t btn_t[] = { TEC1, TEC2, TEC3, TEC4 };
 
 #define KEY_COUNT   sizeof(btn_t)/sizeof(btn_t[0])
 /*=====[Definition macros of private constants]==============================*/
@@ -20,191 +20,170 @@ const gpioMap_t btn_t[] = {TEC1,TEC2,TEC3,TEC4};
 #define DEBOUNCE_TIME_TICKS pdMS_TO_TICKS(DEBOUNCE_TIME)
 /*=====[Prototypes (declarations) of private functions]======================*/
 
-static void keys_reset( uint32_t index );
-static void keys_event_handler_button_pressed( uint32_t index );
-static void keys_event_handler_button_release( uint32_t index );
+static void keys_reset(uint32_t index);
+static void keys_event_handler_button_pressed(uint32_t index);
+static void keys_event_handler_button_release(uint32_t index);
 
 /*=====[Definitions of private global variables]=============================*/
 
 /*=====[Definitions of public global variables]==============================*/
 t_key_data keys_data[KEY_COUNT];
-t_key_config  keys_config[KEY_COUNT];
+t_key_config keys_config[KEY_COUNT];
 extern TaskHandle_t handle_keys_service_task;
 /*=====[prototype of private functions]=================================*/
-void keys_service_task( void* taskParmPtr );
+void keys_service_task(void *taskParmPtr);
 
 /*=====[Implementations of public functions]=================================*/
-TickType_t keys_get_diff( uint32_t index )
-{
-    TickType_t tiempo;
+TickType_t keys_get_diff(uint32_t index) {
+	TickType_t tiempo;
 
-    taskENTER_CRITICAL();
-    tiempo = keys_data[index].time_diff;
-    taskEXIT_CRITICAL();
+	taskENTER_CRITICAL();
+	tiempo = keys_data[index].time_diff;
+	taskEXIT_CRITICAL();
 
-    return tiempo;
+	return tiempo;
 }
 
-void keys_clear_diff( uint32_t index )
-{
-    taskENTER_CRITICAL();
-    keys_data[index].time_diff = KEYS_INVALID_TIME;
-    taskEXIT_CRITICAL();
+void keys_clear_diff(uint32_t index) {
+	taskENTER_CRITICAL();
+	keys_data[index].time_diff = KEYS_INVALID_TIME;
+	taskEXIT_CRITICAL();
 }
 
-void keys_init( void )
-{
-    BaseType_t res;
-    uint32_t i;
+void keys_init(void) {
+	BaseType_t res;
+	uint32_t i;
 
-    for ( i = 0 ; i < KEY_COUNT ; i++ )
-    {
-        keys_data[i].state          = BUTTON_UP;  // Set initial state
-        keys_data[i].time_down      = KEYS_INVALID_TIME;
-        keys_data[i].time_up        = KEYS_INVALID_TIME;
-        keys_data[i].time_diff      = KEYS_INVALID_TIME;
+	for (i = 0; i < KEY_COUNT; i++) {
+		keys_data[i].state = BUTTON_UP;  // Set initial state
+		keys_data[i].time_down = KEYS_INVALID_TIME;
+		keys_data[i].time_up = KEYS_INVALID_TIME;
+		keys_data[i].time_diff = KEYS_INVALID_TIME;
 
-        keys_config[i].btn          = btn_t[i];
-        keys_config[i].sem_btn = xSemaphoreCreateBinary();
+		keys_config[i].btn = btn_t[i];
+		keys_config[i].sem_btn = xSemaphoreCreateBinary();
 
-        // Gestion de errores de semaforos
-        configASSERT( keys_config[i].sem_btn !=  NULL  );
-    }
+		// Gestion de errores de semaforos
+		configASSERT(keys_config[i].sem_btn != NULL);
+	}
 
-    // Crear tareas en freeRTOS
-    taskENTER_CRITICAL();
-    printf("- se crea tarea key \n\r");
-    taskEXIT_CRITICAL();
-    res = xTaskCreate (
-              keys_service_task,					// Funcion de la tarea a ejecutar
-              ( const char * )"keys_service_task",	// Nombre de la tarea como String amigable para el usuario
-              configMINIMAL_STACK_SIZE*2,	// Cantidad de stack de la tarea
-              0,							// Parametros de tarea
-              tskIDLE_PRIORITY+1,			// Prioridad de la tarea
-			  &handle_keys_service_task				// Puntero a la tarea creada en el sistema
-          );
+	// Crear tareas en freeRTOS
+	taskENTER_CRITICAL();
+	printf("- se crea tarea key \n\r");
+	taskEXIT_CRITICAL();
+	res = xTaskCreate(keys_service_task,	// Funcion de la tarea a ejecutar
+			(const char*) "keys_service_task",// Nombre de la tarea como String amigable para el usuario
+			configMINIMAL_STACK_SIZE * 2,	// Cantidad de stack de la tarea
+			0,							// Parametros de tarea
+			tskIDLE_PRIORITY + 1,			// Prioridad de la tarea
+			&handle_keys_service_task// Puntero a la tarea creada en el sistema
+			);
 
-    // Gestión de errores
-    configASSERT( res == pdPASS );
+	// Gestión de errores
+	configASSERT(res == pdPASS);
 }
 
 // keys_ Update State Function
-void keys_Update( uint32_t index )
-{
-    switch( keys_data[index].state )
-    {
-        case STATE_BUTTON_UP:
-            /* CHECK TRANSITION CONDITIONS */
-            if( !gpioRead( keys_config[index].btn ) )
-            {
-                keys_data[index].state = STATE_BUTTON_FALLING;
-            }
-            break;
+void keys_Update(uint32_t index) {
+	switch (keys_data[index].state) {
+	case STATE_BUTTON_UP:
+		/* CHECK TRANSITION CONDITIONS */
+		if (!gpioRead(keys_config[index].btn)) {
+			keys_data[index].state = STATE_BUTTON_FALLING;
+		}
+		break;
 
-        case STATE_BUTTON_FALLING:
-            /* ENTRY */
+	case STATE_BUTTON_FALLING:
+		/* ENTRY */
 
-            /* CHECK TRANSITION CONDITIONS */
-            if( !gpioRead( keys_config[index].btn ) )
-            {
-                keys_data[index].state = STATE_BUTTON_DOWN;
+		/* CHECK TRANSITION CONDITIONS */
+		if (!gpioRead(keys_config[index].btn)) {
+			keys_data[index].state = STATE_BUTTON_DOWN;
 
-                /* ACCION DEL EVENTO !*/
-                keys_event_handler_button_pressed( index );
-            }
-            else
-            {
-                keys_data[index].state = STATE_BUTTON_UP;
-            }
+			/* ACCION DEL EVENTO !*/
+			keys_event_handler_button_pressed(index);
+		} else {
+			keys_data[index].state = STATE_BUTTON_UP;
+		}
 
-            /* LEAVE */
-            break;
+		/* LEAVE */
+		break;
 
-        case STATE_BUTTON_DOWN:
-            /* CHECK TRANSITION CONDITIONS */
-            if( gpioRead( keys_config[index].btn ) )
-            {
-                keys_data[index].state = STATE_BUTTON_RISING;
-            }
-            break;
+	case STATE_BUTTON_DOWN:
+		/* CHECK TRANSITION CONDITIONS */
+		if (gpioRead(keys_config[index].btn)) {
+			keys_data[index].state = STATE_BUTTON_RISING;
+		}
+		break;
 
-        case STATE_BUTTON_RISING:
-            /* ENTRY */
+	case STATE_BUTTON_RISING:
+		/* ENTRY */
 
-            /* CHECK TRANSITION CONDITIONS */
+		/* CHECK TRANSITION CONDITIONS */
 
-            if( gpioRead( keys_config[index].btn ) )
-            {
-                keys_data[index].state = STATE_BUTTON_UP;
+		if (gpioRead(keys_config[index].btn)) {
+			keys_data[index].state = STATE_BUTTON_UP;
 
-                /* ACCION DEL EVENTO ! */
-                keys_event_handler_button_release( index );
-            }
-            else
-            {
-                keys_data[index].state = STATE_BUTTON_DOWN;
-            }
+			/* ACCION DEL EVENTO ! */
+			keys_event_handler_button_release(index);
+		} else {
+			keys_data[index].state = STATE_BUTTON_DOWN;
+		}
 
-            /* LEAVE */
-            break;
+		/* LEAVE */
+		break;
 
-        default:
-            keys_reset( index );
-            break;
-    }
+	default:
+		keys_reset(index);
+		break;
+	}
 }
 
 /*=====[Implementations of private functions]================================*/
 
 /* accion de el evento de tecla pulsada */
-static void keys_event_handler_button_pressed( uint32_t index )
-{
-    TickType_t current_tick_count = xTaskGetTickCount();
+static void keys_event_handler_button_pressed(uint32_t index) {
+	TickType_t current_tick_count = xTaskGetTickCount();
 
-    taskENTER_CRITICAL();
-    keys_data[index].time_down = current_tick_count;
-    taskEXIT_CRITICAL();
+	taskENTER_CRITICAL();
+	keys_data[index].time_down = current_tick_count;
+	taskEXIT_CRITICAL();
 }
 
 /* accion de el evento de tecla liberada */
-static void keys_event_handler_button_release( uint32_t index )
-{
-    TickType_t current_tick_count = xTaskGetTickCount();
+static void keys_event_handler_button_release(uint32_t index) {
+	TickType_t current_tick_count = xTaskGetTickCount();
 
-    taskENTER_CRITICAL();
-    keys_data[index].time_up    = current_tick_count;
-    keys_data[index].time_diff  = keys_data[index].time_up - keys_data[index].time_down;
-    taskEXIT_CRITICAL();
+	taskENTER_CRITICAL();
+	keys_data[index].time_up = current_tick_count;
+	keys_data[index].time_diff = keys_data[index].time_up
+			- keys_data[index].time_down;
+	taskEXIT_CRITICAL();
 
-    if ( keys_data[index].time_diff  > 0 )
-    {
-        xSemaphoreGive( keys_config[index].sem_btn );
-        taskENTER_CRITICAL();
-        printf("--- libera semaforo %d\n\r",(int)index);
-        taskEXIT_CRITICAL();
-    }
+	if (keys_data[index].time_diff > 0) {
+		xSemaphoreGive(keys_config[index].sem_btn);
+		taskENTER_CRITICAL();
+		printf("--- libera semaforo %d\n\r", (int) index);
+		taskEXIT_CRITICAL();
+	}
 }
 
-static void keys_reset( uint32_t index )
-{
-    taskENTER_CRITICAL();
-    keys_data[index].state = BUTTON_UP;
-    taskEXIT_CRITICAL();
+static void keys_reset(uint32_t index) {
+	taskENTER_CRITICAL();
+	keys_data[index].state = BUTTON_UP;
+	taskEXIT_CRITICAL();
 }
 
 /*=====[Implementations of private functions]=================================*/
-void keys_service_task( void* taskParmPtr )
-{
-  taskENTER_CRITICAL();
-  printf("-- inicia: keys_service_task - %d\n\r",(int)taskParmPtr);
-  taskEXIT_CRITICAL();
-  uint32_t i;
-  while( TRUE )
-  {
-    for ( i = 0 ; i < KEY_COUNT ; i++ )
-    {
-      keys_Update( i );
-    }
-    vTaskDelay( DEBOUNCE_TIME_TICKS );
-  }
+void keys_service_task(void *taskParmPtr) {
+	taskENTER_CRITICAL();
+	printf("-- inicia: keys_service_task - %d\n\r", (int) taskParmPtr);
+	taskEXIT_CRITICAL();
+	uint32_t i;
+	while ( TRUE) {
+		for (i = 0; i < KEY_COUNT; i++) {
+			keys_Update(i);
+		}
+		vTaskDelay( DEBOUNCE_TIME_TICKS);
+	}
 }
