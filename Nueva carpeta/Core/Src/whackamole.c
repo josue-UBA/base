@@ -6,26 +6,43 @@
  */
 
 #include "whackamole.h"
-
+#include "random.h"
 void whackamole_service_logic(void *taskParmPtr) {
+	//debugger_con_printf("-- inicia: tarea_principal\n\r",0);
+	/*
+	 *
+	 * Primero, esperamos a que se presione alguna tecla por al menos 50 ms
+	 *
+	 * */
 	int tiempo_maximo = 50;
+	/* flag que nos ayudara a determinar si es que se presiono una tecla por mas de 50 ms o no */
+
 	int si_no = 0;
 	while (si_no == 0) {
 		int i = 0;
+		/* Iterara hasta que la tarea key indique que alguna tecla se presiono mas de 50 ms */
+
 		for (; i < LED_COUNT; i++) {
 			if (tiempo_maximo < (int) keys_get_diff(i)) {
 				si_no = 1;
 				taskENTER_CRITICAL();
-				printf("EL JUEGO COMIENZA: %d\n\r", (int) keys_get_diff(i));
+				debugger_con_printf("EL JUEGO COMIENZA: %d\n\r", (int) keys_get_diff(i));
 				taskEXIT_CRITICAL();
 			}
 		}
 	}
-	//-----------------------------
+	/* Se limpia todos los semaforos por si es que se dio alguno antes del inicio del juego */
+	for (int i = 0; i < LED_COUNT; i++) {
+		xSemaphoreTake(keys_config[i].sem_btn, 0);
+	}
+	/*
+	 *
+	 * Si se presiono alguna tecla, procedemos a crear las tareas topos
+	 *
+	 * */
 	whackamole_init();
-	taskENTER_CRITICAL();
-	printf("-- inicia: tarea_principal - %d\n\r", (int) taskParmPtr);
-	taskEXIT_CRITICAL();
+	/* Luego preparamos las variables */
+
 	int sumatoria = 0;
 	int elemento_de_cola = 0;
 	int tiempo = (int) xTaskGetTickCount();
@@ -60,60 +77,63 @@ void whackamole_service_logic(void *taskParmPtr) {
 
 // Implementacion de funcion de la tarea
 void mole_service_logic(void *taskParmPtr) {
-	taskENTER_CRITICAL();
-	printf("-- inicia: tarea_topo - %d\n\r", (int) taskParmPtr);
-	taskEXIT_CRITICAL();
 	uint32_t index = (uint32_t) taskParmPtr;
 	int xLastWakeTime = 0;
-	int tiempo_random_arriba = 2000;
-	int tiempo_random_abajo = 2000;
+	int tiempo_random_arriba;
+	int tiempo_random_abajo;
 	int enviar_a_cola = 0;
-	int N = 2000; // numero aleatorio maximo
 	for (;;) {
 		gpioWrite(leds_t[index], ON);
-		tiempo_random_arriba = random( 1000,6000 );//rand() % (N + 1); // tiene que ser random
+		tiempo_random_arriba = random(1000, 2000); //rand() % (N + 1); // tiene que ser random
 		xLastWakeTime = (int) xTaskGetTickCount();
+		/* si se presiono cuando el topo salio, entonces... */
 		if (xSemaphoreTake(keys_config[index].sem_btn,
 				tiempo_random_arriba) == TRUE) {
+			/* ecuacion que determina el puntaje */
 			enviar_a_cola = tiempo_random_arriba + xLastWakeTime
 					- (int) xTaskGetTickCount();
 			xQueueSend(xQueue1, &enviar_a_cola, 0);
-			taskENTER_CRITICAL();
-			printf("--- premio: %d\n\r", enviar_a_cola);
-			taskEXIT_CRITICAL();
-		} else {
-			enviar_a_cola = -10;
+			debugger_con_printf("Se premia con %d puntos!!\n\r", enviar_a_cola);
+
+		}
+
+		/* si NO se presiono cuando el topo salio, entonces se penaliza con -10
+		 * puntos. */
+
+		else {
+			enviar_a_cola = whackamole_points_miss();
 			xQueueSend(xQueue1, &enviar_a_cola, 0);
-			taskENTER_CRITICAL();
-			//printf("--- castigo: %d\n\r",enviar_a_cola);
-			taskEXIT_CRITICAL();
+			debugger_con_printf(
+					"el topo %d salio, pero no lo atrapaste... -10 puntos\n\r",
+					index);
+
 		}
 		gpioWrite(leds_t[index], OFF);
-		//tiempo_random_abajo  = rand() % (N+1);// tiene que ser random
+		tiempo_random_abajo = random(1000, 2000); // tiene que ser random
 		xLastWakeTime = (int) xTaskGetTickCount();
+		/* el topo ya se escondio. El jugador no deberia pulsar la tecla.
+		 * Si lo hace, entonces se le penaliza con -20 */
 		if (xSemaphoreTake(keys_config[index].sem_btn,
 				tiempo_random_abajo) == TRUE) {
-			enviar_a_cola = -20;
+			enviar_a_cola = whackamole_points_no_mole();
 			xQueueSend(xQueue1, &enviar_a_cola, 0);
 			vTaskDelayUntil(&xLastWakeTime, tiempo_random_abajo);
-			taskENTER_CRITICAL();
-			//printf("--- castigo: %d\n\r",enviar_a_cola);
-			taskEXIT_CRITICAL();
-		} else {
-			//nada
+			debugger_con_printf(
+					"no presiones el agujero del topo %d !!! -20 puntos\n\r",
+					index);
 		}
+
+		/* en caso el jugador no haga nada, entonces continua el flujo sin
+		 * sumar ni restar puntos. */
 	}
 }
 
-
-void whackamole_init(){
+void whackamole_init() {
 
 	uint32_t i;
 	xQueue1 = xQueueCreate(10, sizeof(int));
 	for (i = 0; i < LED_COUNT; i++) {
-		taskENTER_CRITICAL();
-		printf("- se crea tarea topo i\n\r");
-		taskEXIT_CRITICAL();
+		debugger_con_printf("- se crea tarea topo %d\n\r", i);
 		BaseType_t res = xTaskCreate(mole_service_logic, // Funcion de la tarea a ejecutar
 				(const char*) "mole_service_logic", // Nombre de la tarea como String amigable para el usuario
 				configMINIMAL_STACK_SIZE * 2, // Cantidad de stack de la tarea
@@ -126,4 +146,26 @@ void whackamole_init(){
 	}
 
 }
+/**
+ @brief devuelve el puntaje por haber perdido al mole
 
+ @return uint32_t
+ */
+uint32_t whackamole_points_miss() {
+	return -10;
+}
+
+/**
+ @brief devuelve el puntaje por haber martillado cuando no habia mole
+
+ @return uint32_t
+ */
+uint32_t whackamole_points_no_mole() {
+	return -20;
+}
+
+void debugger_con_printf(char *texto, int numero) {
+	taskENTER_CRITICAL();
+	printf(texto, numero);
+	taskEXIT_CRITICAL();
+}

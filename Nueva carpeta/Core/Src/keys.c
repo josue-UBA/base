@@ -10,6 +10,7 @@
 /*==================[ Inclusions ]============================================*/
 #include "keys.h"
 #include "sapi.h"
+#include "whackamole.h"
 
 /*=====[ Definitions of private data types ]===================================*/
 const gpioMap_t btn_t[] = { TEC1, TEC2, TEC3, TEC4 };
@@ -68,9 +69,7 @@ void keys_init(void) {
 	}
 
 	// Crear tareas en freeRTOS
-	taskENTER_CRITICAL();
-	printf("- se crea tarea key \n\r");
-	taskEXIT_CRITICAL();
+	debugger_con_printf("- se crea tarea key \n\r",0);
 	res = xTaskCreate(keys_service_task,	// Funcion de la tarea a ejecutar
 			(const char*) "keys_service_task",// Nombre de la tarea como String amigable para el usuario
 			configMINIMAL_STACK_SIZE * 2,	// Cantidad de stack de la tarea
@@ -162,9 +161,7 @@ static void keys_event_handler_button_release(uint32_t index) {
 
 	if (keys_data[index].time_diff > 0) {
 		xSemaphoreGive(keys_config[index].sem_btn);
-		taskENTER_CRITICAL();
-		printf("--- libera semaforo %d\n\r", (int) index);
-		taskEXIT_CRITICAL();
+
 	}
 }
 
@@ -177,7 +174,7 @@ static void keys_reset(uint32_t index) {
 /*=====[Implementations of private functions]=================================*/
 void keys_service_task(void *taskParmPtr) {
 	taskENTER_CRITICAL();
-	printf("-- inicia: keys_service_task - %d\n\r", (int) taskParmPtr);
+	//printf("-- inicia: keys_service_task - %d\n\r", (int) taskParmPtr);
 	taskEXIT_CRITICAL();
 	uint32_t i;
 	while ( TRUE) {

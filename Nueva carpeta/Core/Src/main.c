@@ -112,7 +112,8 @@ int main(void) {
 	MX_GPIO_Init();
 	MX_USART2_UART_Init();
 	/* USER CODE BEGIN 2 */
-
+	debugger_con_printf("\n\n\n\n", 0);
+	debugger_con_printf("====== COMIENZA EL PROGRAMA ======\n\r", 0);
 	/* USER CODE END 2 */
 
 	/* Init scheduler */
@@ -148,7 +149,7 @@ int main(void) {
 			(void*) 0,                          // Parametros de tarea
 			tskIDLE_PRIORITY + 1,         // Prioridad de la tarea
 			0                         // Puntero a la tarea creada en el sistema
-	);
+			);
 	// Gestion de errores
 	configASSERT(res == pdPASS);
 	/* USER CODE END RTOS_THREADS */
